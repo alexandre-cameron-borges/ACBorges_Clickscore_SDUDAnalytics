@@ -1,23 +1,29 @@
 import streamlit as st
-import torch
 from models.predict import predict_cb
-import pandas as pd
 
-st.set_page_config(page_title="Clickbait Detector")
+# 1) Config page
+st.set_page_config(page_title="Clickbait Detector", layout="centered")
 st.title("Détection de Clickbait Publicitaire")
 
-# UI Inputs
-texte  = st.text_area("Entrez votre texte publicitaire", height=150)
-age    = st.slider("Âge cible", 18.0, 99.0, 30.0)
-genre  = st.selectbox("Genre cible", ["Male","Female","Unknown"])
-gender_map = {"Male":0,"Female":1,"Unknown":2}
+# 2) Constantes pour normalisation de l'âge (à ajuster)
+MEDIAN_AGE = 35.0   # ta médiane réelle
+MAX_AGE    = 80.0   # ton max réel
 
+# 3) Mapping genre
+gender_map = {"Male": 0, "Female": 1, "Unknown": 2}
+
+# 4) Inputs utilisateur
+texte = st.text_area("Texte publicitaire", height=150)
+age   = st.slider("Âge cible", min_value=18.0, max_value=99.0, value=30.0)
+genre = st.selectbox("Genre cible", list(gender_map.keys()))
+
+# 5) Prédiction
 if st.button("Prédire"):
-    # Normalisation de l'âge (mêmes bornes que pour l'entraînement)
-    med, mx =  df['age'].median(), df['age'].max()
-    age_norm = (age - med) / (mx - med)
-    # Appel à la fonction de prédiction
-    proba = predict_cb(texte, age_norm, gender_map[genre])
-    label = "Clickbait" if proba >= 0.5 else "Non-Clickbait"
-    st.metric("Probabilité de clickbait", f"{proba:.1%}")
-    st.success(f"Résultat : {label}")
+    if not texte.strip():
+        st.error("Le texte ne peut pas être vide.")
+    else:
+        age_norm = (age - MEDIAN_AGE) / (MAX_AGE - MEDIAN_AGE)
+        proba = predict_cb(texte, age_norm, gender_map[genre])
+        label = "Clickbait" if proba >= 0.5 else "Non-Clickbait"
+        st.metric("Probabilité de Clickbait", f"{proba:.1%}")
+        st.success(f"Résultat : {label}")
