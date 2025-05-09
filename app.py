@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 from models.predict import predict_cb
 
@@ -9,21 +10,33 @@ st.title("Détection de Clickbait Publicitaire")
 MEDIAN_AGE = 35.0   # ta médiane réelle
 MAX_AGE    = 80.0   # ton max réel
 
-# 3) Mapping genre
+# 3) Charge le SEUIL calculé en amont (hardcode ou import d’un constante)
+SEUIL = 0.57       # remplace par la valeur trouvée via ROC
+
+# 4) Mapping genre
 gender_map = {"Male": 0, "Female": 1, "Unknown": 2}
 
-# 4) Inputs utilisateur
+# 5) Inputs utilisateur
 texte = st.text_area("Texte publicitaire", height=150)
 age   = st.slider("Âge cible", min_value=18.0, max_value=99.0, value=30.0)
 genre = st.selectbox("Genre cible", list(gender_map.keys()))
 
-# 5) Prédiction
+# 6) Bouton de prédiction
 if st.button("Prédire"):
-    if not texte.strip():
-        st.error("Le texte ne peut pas être vide.")
+    # A) Filtre Texte vide ou trop court
+    if not texte or len(texte.strip()) < 5:
+        st.error("Le texte doit contenir au moins 5 caractères.")
     else:
+        # B) Normalisation de l’âge
         age_norm = (age - MEDIAN_AGE) / (MAX_AGE - MEDIAN_AGE)
+        # C) Appel du modèle
         proba = predict_cb(texte, age_norm, gender_map[genre])
-        label = "Clickbait" if proba >= 0.5 else "Non-Clickbait"
+        # D) Décision selon le SEUIL
+        label = "Clickbait" if proba >= SEUIL else "Non-Clickbait"
+        # E) Affichage
         st.metric("Probabilité de Clickbait", f"{proba:.1%}")
-        st.success(f"Résultat : {label}")
+        if label == "Clickbait":
+            st.error(f"Résultat : {label}")
+        else:
+            st.success(f"Résultat : {label}")
+
