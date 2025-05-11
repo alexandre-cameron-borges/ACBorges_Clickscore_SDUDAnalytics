@@ -1,20 +1,25 @@
+# models/predict.py
+
 import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from transformers import AutoTokenizer, AutoModel, AutoConfig
+from huggingface_hub import hf_hub_download
 
-# 1️⃣ Config
-device    = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-hf_token  = os.environ.get("HUGGINGFACE_TOKEN")
+# 1️⃣ Configuration
+device   = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+hf_token = os.environ.get("HUGGINGFACE_TOKEN")
 if not hf_token:
     raise RuntimeError("HUGGINGFACE_TOKEN manquant : impossible de charger les modèles privés")
 hf_kwargs = {"use_auth_token": hf_token}
 
 # 2️⃣ Tokenizer
-tokenizer = AutoTokenizer.from_pretrained("bert-base-multilingual-cased", **hf_kwargs)
+tokenizer = AutoTokenizer.from_pretrained(
+    "bert-base-multilingual-cased", **hf_kwargs
+)
 
-# 3️⃣ Classes modèles (identiques)
+# 3️⃣ Architectures
 class ClickbaitModelWithCustomHead(nn.Module):
     def __init__(self, bert_id, n_genders):
         super().__init__()
@@ -23,7 +28,10 @@ class ClickbaitModelWithCustomHead(nn.Module):
         self.age_fc     = nn.Linear(1, 16)
         hid = self.bert.config.hidden_size + 16 + 8
         self.head      = nn.Sequential(
-            nn.Linear(hid, 64), nn.ReLU(), nn.Dropout(0.3), nn.Linear(64, 1)
+            nn.Linear(hid, 64),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            nn.Linear(64, 1)
         )
     def forward(self, input_ids, attention_mask, age, gender):
         out       = self.bert(input_ids=input_ids, attention_mask=attention_mask)
@@ -42,7 +50,7 @@ class CTRModel(nn.Module):
         out = self.base(input_ids=input_ids, attention_mask=attention_mask)
         return torch.sigmoid(self.reg_head(out.pooler_output)).squeeze(-1)
 
-# 4️⃣ Lazy loaders
+# 4️⃣ Lazy-loading avec hf_hub_download
 CLICKBAIT_ID = "alexandre-cameron-borges/clickbait-model"
 CTR_ID       = "alexandre-cameron-borges/ctr-model"
 N_GENDERS    = 3
@@ -53,19 +61,33 @@ _ctr_model = None
 def _load_cb_model():
     global _cb_model
     if _cb_model is None:
-        try:
-            _cb_model = ClickbaitModelWithCustomHead(CLICKBAIT_ID, N_GENDERS).to(device).eval()
-        except Exception as e:
-            raise RuntimeError(f"Échec chargement ClickbaitModel : {e}")
+        # Télécharger le checkpoint custom
+        ckpt = hf_hub_download(
+            repo_id=CLICKBAIT_ID,
+            filename="best_cb_model.pt",
+            use_auth_token=hf_token
+        )
+        # Instancier et charger les poids
+        model = ClickbaitModelWithCustomHead(CLICKBAIT_ID, N_GENDERS).to(device)
+        state = torch.load(ckpt, map_location=device)
+        model.load_state_dict(state)
+        model.eval()
+        _cb_model = model
     return _cb_model
 
 def _load_ctr_model():
     global _ctr_model
     if _ctr_model is None:
-        try:
-            _ctr_model = CTRModel(CTR_ID).to(device).eval()
-        except Exception as e:
-            raise RuntimeError(f"Échec chargement CTRModel : {e}")
+        ckpt = hf_hub_download(
+            repo_id=CTR_ID,
+            filename="best_ctr_model.pt",
+            use_auth_token=hf_token
+        )
+        model = CTRModel(CTR_ID).to(device)
+        state = torch.load(ckpt, map_location=device)
+        model.load_state_dict(state)
+        model.eval()
+        _ctr_model = model
     return _ctr_model
 
 # 5️⃣ Fonctions de prédiction
@@ -77,7 +99,8 @@ def predict_cb(text: str, age_norm: float, gender_id: int):
     age_t = torch.tensor([age_norm], dtype=torch.float, device=device)
     gen_t = torch.tensor([gender_id], dtype=torch.long, device=device)
     with torch.no_grad():
-        return torch.sigmoid(model(ids, mask, age_t, gen_t)).item()
+        logits = model(ids, mask, age_t, gen_t)
+        return torch.sigmoid(logits).item()
 
 def predict_ctr(text: str):
     model = _load_ctr_model()
