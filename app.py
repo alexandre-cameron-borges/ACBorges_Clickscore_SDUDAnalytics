@@ -4,7 +4,7 @@ from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassifica
 
 @st.cache(allow_output_mutation=True)
 def load_models():
-    token = os.getenv("HF_TOKEN")
+    token = os.getenv("HUGGINGFACE_TOKEN")
     # Clickbait privé
     clf = pipeline(
         "text-classification",
