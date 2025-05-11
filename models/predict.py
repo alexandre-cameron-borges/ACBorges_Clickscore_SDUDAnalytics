@@ -65,7 +65,6 @@ def _load_cb_model():
         ckpt = hf_hub_download(
             repo_id=CLICKBAIT_ID,
             filename="best_cb_model.pt",
-             trust_remote_code=True,      # ← Active l’exécution du code custom dans le repo
             use_auth_token=hf_token
         )
         model = ClickbaitModelWithCustomHead(BACKBONE_ID, N_GENDERS).to(device)
@@ -83,7 +82,6 @@ def _load_ctr_model():
         ckpt = hf_hub_download(
             repo_id=CTR_ID,
             filename="best_ctr_model.pt",
-             trust_remote_code=True,      # ← Active l’exécution du code custom dans le repo
             use_auth_token=hf_token
         )
         model = CTRModel(BACKBONE_ID).to(device)
