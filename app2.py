@@ -77,7 +77,7 @@ if st.button("🚀 Prédire"):
     x = df_res["Classification"].map(class_encode) + np.random.normal(0, 0.05, len(df_res))
 
     fig, ax = plt.subplots()
-        ax.scatter(
+    ax.scatter(
             x,
             df_res["CTR prédit"].str.rstrip("%").astype(float),
             c=df_res["color"]
