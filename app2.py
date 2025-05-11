@@ -10,7 +10,7 @@ if "HUGGINGFACE_TOKEN" not in st.secrets:
 os.environ["HUGGINGFACE_TOKEN"] = st.secrets["HUGGINGFACE_TOKEN"]
 
 # 1) Imports
-from models.predict import predict_cb, predict_ctr
+from models.predict import predict_cb, predict_tm, predict_ctr
 
 # 2) UI Setup
 st.set_page_config(page_title="Clickbait & CTR Predictor", layout="centered")
@@ -50,8 +50,7 @@ if st.button("🚀 Prédire"):
         p_tm  = predict_tm(row["texte"], age_norm, gender_id)  # 0/1/2
         p_ctr = predict_ctr(row["texte"])
         # mapping du tm_label en étiquette
-        label_map = {0:"❗ Nobait", 1:"Softbait", 2:"✅ Clickbait"}
-        label = label_map.get(p_tm, "Unknown")
+        label = {0:"❗ Nobait", 1:"Softbait", 2:"✅ Clickbait"}[p_tm]
 
         results.append({
             "Texte":          row["texte"],
@@ -62,37 +61,46 @@ if st.button("🚀 Prédire"):
     st.table(pd.DataFrame(results))
 
 
-    # DataFrame résultat
+# DataFrame résultat
     df_res = pd.DataFrame(results)
-    df_res["color"] = df_res["Classification"].apply(
-        lambda lab: "green" if "Clickbait" in lab else "red"
-    )
 
-    # === Création de fig et fig2 ===
+# 1) Couleurs selon le nouveau label
+    color_map = {
+        "❗ Nobait":   "red",
+        "Softbait":   "orange",
+        "✅ Clickbait":"green"
+    }
+    df_res["color"] = df_res["Classification"].map(color_map)
+
+# 2) Scatter CTR vs Classification (jitter sur l’axe X)
+    class_encode = {"❗ Nobait":0, "Softbait":1, "✅ Clickbait":2}
+    x = df_res["Classification"].map(class_encode) + np.random.normal(0, 0.05, len(df_res))
+
     fig, ax = plt.subplots()
-    ax.scatter(
-        df_res["P(clickbait)"].str.rstrip("%").astype(float),
-        df_res["CTR prédit"].str.rstrip("%").astype(float),
-        c=df_res["color"]
-    )
-    ax.set_xlabel("P(clickbait) (%)")
+        ax.scatter(
+            x,
+            df_res["CTR prédit"].str.rstrip("%").astype(float),
+            c=df_res["color"]
+        )
+    ax.set_xticks([0,1,2])
+    ax.set_xticklabels(["Nobait","Softbait","Clickbait"])
     ax.set_ylabel("CTR prédit (%)")
-    ax.set_title("Clickbait vs CTR pour chaque texte")
+    ax.set_title("CTR vs Classification")
+    plt.tight_layout()
 
-    counts = df_res["Classification"].value_counts()
+# 3) Pie chart des 3 classes
+    counts = df_res["Classification"].value_counts().reindex(color_map.keys(), fill_value=0)
     fig2, ax2 = plt.subplots()
     ax2.pie(
         counts,
         labels=counts.index,
         autopct="%1.1f%%",
         startangle=90,
-        colors=[
-            "green" if "Clickbait" in lab else "red"
-            for lab in counts.index
-        ]
+        colors=[color_map[l] for l in counts.index]
     )
-    ax2.set_title("Répartition Clickbait vs Non-clickbait")
+    ax2.set_title("Répartition des classes")
     ax2.axis("equal")
+
 
     # === Affichage côte-à-côte des graphiques ===
     col1, col2 = st.columns([0.6, 0.4])
