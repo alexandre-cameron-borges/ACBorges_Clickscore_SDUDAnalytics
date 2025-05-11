@@ -73,6 +73,19 @@ if st.button("🚀 Prédire"):
     ax.set_ylabel("CTR prédit (%)")
     ax.set_title("Clickbait vs CTR pour chaque texte")
     st.pyplot(fig)
+    
+    # Piechart
+    counts = df_res["Classification"].value_counts()
+    fig2, ax2 = plt.subplots()
+    ax2.pie(
+    counts,
+    labels=counts.index,
+    autopct="%1.1f%%",
+    startangle=90
+    )
+    ax2.set_title("Répartition Clickbait vs Non-clickbait")
+    ax2.axis("equal")  # rond parfait
+    st.pyplot(fig2)
 
 
 
