@@ -65,8 +65,8 @@ df_res["color"] = df_res["Classification"].apply(
     lambda lab: "red" if "Non-clickbait" in lab else "green"
 )
 
-    fig, ax = plt.subplots()
-    ax.scatter(
+fig, ax = plt.subplots()
+ax.scatter(
         df_res["P(clickbait)"].str.rstrip("%").astype(float),
         df_res["CTR prédit"].str.rstrip("%").astype(float),
         c=df_res["color"]
