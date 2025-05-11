@@ -2,6 +2,7 @@ import streamlit as st
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
 
 # 0) Token HF
 if "HUGGINGFACE_TOKEN" not in st.secrets:
