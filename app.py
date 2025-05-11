@@ -1,3 +1,4 @@
+import requirements.txt 
 import os
 from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassification
 
