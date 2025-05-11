@@ -18,7 +18,7 @@ gender_map = {"Male":0, "Female":1, "Unknown":2}
 
 # 3) Inputs utilisateur
 texte = st.text_area("📝 Texte publicitaire", height=150)
-age   = st.slider("🎯 Âge cible", 18.0, 99.0, 30.0)
+age = st.slider("🎯 Âge cible", 18, 99, 30, step=1)
 genre = st.selectbox("👤 Genre cible", list(gender_map.keys()))
 
 # 4) Prédiction
