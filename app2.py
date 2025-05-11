@@ -54,7 +54,7 @@ if st.button("🚀 Prédire"):
             "P(clickbait)": f"{p_cb:.1%}",
             "Classification": label,
             # On soustrait 50 %
-            "CTR prédit": f"{(p_ctr - 0.48):.1%}"  
+            "CTR prédit": f"{(p_ctr - (p_ctr*0.50)):.1%}"  
             # ou : f"{(p_ctr*100 - 50):.1f} %"
         })
     st.table(pd.DataFrame(results))
