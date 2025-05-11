@@ -9,7 +9,7 @@ optuna>=3.0.0
 
 # — Traitement du texte / NLP —
 transformers>=4.30.0
-torch>=2.0.0             # backend BERT
+torch==2.6.0
 
 # — Visualisation & Notebook —
 jupyterlab>=4.0.0
