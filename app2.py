@@ -45,19 +45,22 @@ if st.button("🚀 Prédire"):
     age_norm  = (age - MEDIAN_AGE) / (MAX_AGE - MEDIAN_AGE)
     gender_id = gender_map[genre]
     results = []
+
     for _, row in df.iterrows():
-        p_cb  = predict_cb(row["texte"], age_norm, gender_id)
+        p_tm  = predict_tm(row["texte"], age_norm, gender_id)  # 0/1/2
         p_ctr = predict_ctr(row["texte"])
-        label = "✅ Clickbait" if p_cb >= 0.8 else "❗ Non-clickbait"
+        # mapping du tm_label en étiquette
+        label_map = {0:"❗ Nobait", 1:"Softbait", 2:"✅ Clickbait"}
+        label = label_map.get(p_tm, "Unknown")
+
         results.append({
-            "Texte": row["texte"],
-            "P(clickbait)": f"{p_cb:.1%}",
+            "Texte":          row["texte"],
             "Classification": label,
-            # On soustrait 50 %
-            "CTR prédit": f"{(p_ctr - (p_ctr*0.50)):.1%}"  
-            # ou : f"{(p_ctr*100 - 50):.1f} %"
+            "CTR prédit":     f"{p_ctr:.1%}"
         })
+
     st.table(pd.DataFrame(results))
+
 
     # DataFrame résultat
     df_res = pd.DataFrame(results)
