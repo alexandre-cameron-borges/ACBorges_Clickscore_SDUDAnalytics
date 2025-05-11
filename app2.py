@@ -51,4 +51,46 @@ if st.button("🚀 Prédire"):
             "P(clickbait)": f"{p_cb:.1%}",
             "Classification": label,
             "CTR prédit": f"{p_ctr:.1%}"
+        })
+    st.table(pd.DataFrame(results))
 
+    # DataFrame résultat
+    df_res = pd.DataFrame(results)
+    df_res["color"] = df_res["Classification"].apply(
+        lambda lab: "green" if "Clickbait" in lab else "red"
+    )
+
+    # === Création de fig et fig2 ===
+    fig, ax = plt.subplots()
+    ax.scatter(
+        df_res["P(clickbait)"].str.rstrip("%").astype(float),
+        df_res["CTR prédit"].str.rstrip("%").astype(float),
+        c=df_res["color"]
+    )
+    ax.set_xlabel("P(clickbait) (%)")
+    ax.set_ylabel("CTR prédit (%)")
+    ax.set_title("Clickbait vs CTR pour chaque texte")
+
+    counts = df_res["Classification"].value_counts()
+    fig2, ax2 = plt.subplots()
+    ax2.pie(
+        counts,
+        labels=counts.index,
+        autopct="%1.1f%%",
+        startangle=90,
+        colors=[
+            "green" if "Clickbait" in lab else "red"
+            for lab in counts.index
+        ]
+    )
+    ax2.set_title("Répartition Clickbait vs Non-clickbait")
+    ax2.axis("equal")
+
+    # === Affichage côte-à-côte ===
+    col1, col2 = st.columns([0.6, 0.4])
+    with col1:
+        st.subheader("Scatterplot")
+        st.pyplot(fig)
+    with col2:
+        st.subheader("Pie Chart")
+        st.pyplot(fig2)
