@@ -81,7 +81,9 @@ if st.button("🚀 Prédire"):
     counts,
     labels=counts.index,
     autopct="%1.1f%%",
-    startangle=90
+    startangle=90,
+    colors= ["green" if "Clickbait" in lab else "red"
+    for lab in counts.index]
     )
     ax2.set_title("Répartition Clickbait vs Non-clickbait")
     ax2.axis("equal")  # rond parfait
