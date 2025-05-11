@@ -21,9 +21,12 @@ MEDIAN_AGE = 35.0
 MAX_AGE    = 80.0
 gender_map = {"Male":0, "Female":1, "Unknown":2}
 
-# 4) Sélecteurs globaux
-age   = st.slider("🎯 Âge cible", 18, 99, 30)
-genre = st.selectbox("👤 Genre cible", list(gender_map.keys()))
+# 4) Sélecteurs globaux côte-à-côte
+col_age, col_genre = st.columns([0.6, 0.4])
+with col_age:
+    age = st.slider("🎯 Âge cible", 18, 99, 30)
+with col_genre:
+    genre = st.selectbox("👤 Genre cible", list(gender_map.keys()))
 
 # 5) CSV uploader
 uploaded_file = st.file_uploader("📂 Importez votre CSV (colonnes: image, texte)", type="csv")
@@ -86,7 +89,7 @@ if st.button("🚀 Prédire"):
     ax2.set_title("Répartition Clickbait vs Non-clickbait")
     ax2.axis("equal")
 
-    # === Affichage côte-à-côte ===
+    # === Affichage côte-à-côte des graphiques ===
     col1, col2 = st.columns([0.6, 0.4])
     with col1:
         st.subheader("Scatterplot")
