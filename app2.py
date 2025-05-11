@@ -3,6 +3,8 @@
 import streamlit as st
 import os
 import pandas as pd
+import matplotlib.pyplot as plt
+
 
 # 0) Token HF
 if "HUGGINGFACE_TOKEN" not in st.secrets:
@@ -54,3 +56,19 @@ if st.button("🚀 Prédire"):
             "CTR prédit": f"{p_ctr:.1%}"
         })
     st.table(pd.DataFrame(results))
+        # Afficher le tableau
+
+    # === Nouveau : scatterplot ===
+    df_res = pd.DataFrame(results)
+    fig, ax = plt.subplots()
+    ax.scatter(
+        df_res["P(clickbait)"].str.rstrip("%").astype(float),
+        df_res["CTR prédit"].str.rstrip("%").astype(float)
+    )
+    ax.set_xlabel("P(clickbait) (%)")
+    ax.set_ylabel("CTR prédit (%)")
+    ax.set_title("Clickbait vs CTR pour chaque texte")
+    st.pyplot(fig)
+
+
+
