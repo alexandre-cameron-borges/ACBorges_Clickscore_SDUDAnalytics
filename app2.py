@@ -62,7 +62,7 @@ if st.button("🚀 Prédire"):
     df_res = pd.DataFrame(results)
     # Vert si clickbait, rouge si non-clickbait
 df_res["color"] = df_res["Classification"].apply(
-    lambda lab: "green" if "❗ Clickbait" in lab else "red"
+    lambda lab: "red" if "Non-clickbait" in lab else "green"
 )
 
     fig, ax = plt.subplots()
