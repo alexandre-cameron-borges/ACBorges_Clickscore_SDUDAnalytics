@@ -82,9 +82,18 @@ def _load_cb_model():
             BACKBONE_ID, N_GENDERS, n_tm_classes=3
         ).to(device)
         state = torch.load(ckpt, map_location=device)
-        missing, unexpected = model.load_state_dict(state, strict=False)
-        if missing:    print(f"⚠️ Missing keys in CB model: {missing}")
-        if unexpected: print(f"⚠️ Unexpected keys in CB model: {unexpected}")
+# Ne garder que les clés compatibles entre checkpoint et modèle
+        model_dict      = model.state_dict()
+        pretrained_dict = {
+        k: v for k, v in state.items()
+        if k in model_dict and v.shape == model_dict[k].shape
+        }
+# Mettre à jour uniquement ces clés
+        model_dict.update(pretrained_dict)
+        model.load_state_dict(model_dict)
+
+        print(f"✅ Chargé {len(pretrained_dict)}/{len(model_dict)} clés depuis le checkpoint")
+
         model.eval()
         _cb_model = model
     return _cb_model
