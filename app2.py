@@ -48,12 +48,14 @@ if st.button("🚀 Prédire"):
     for _, row in df.iterrows():
         p_cb  = predict_cb(row["texte"], age_norm, gender_id)
         p_ctr = predict_ctr(row["texte"])
-        label = "❗ Clickbait" if p_cb >= 0.5 else "✅ Non-clickbait"
+        label = "✅ Clickbait" if p_cb >= 0.8 else "❗ Non-clickbait"
         results.append({
             "Texte": row["texte"],
             "P(clickbait)": f"{p_cb:.1%}",
             "Classification": label,
-            "CTR prédit": f"{p_ctr:.1%}"
+            # On soustrait 50 %
+            "CTR prédit": f"{(p_ctr - 0.50):.1%}"  
+            # ou : f"{(p_ctr*100 - 50):.1f} %"
         })
     st.table(pd.DataFrame(results))
 
