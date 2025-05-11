@@ -2,28 +2,26 @@ import os
 import streamlit as st
 from models.predict import predict_cb, predict_ctr
 
-# 0) Vérification du token
+# 0) Vérifier le token dès le démarrage
 if not os.getenv("HUGGINGFACE_TOKEN"):
-    st.error("⚠️ HUGGINGFACE_TOKEN non défini.")
+    st.error("⚠️ Définissez HUGGINGFACE_TOKEN dans vos variables d'environnement.")
     st.stop()
 
-# 1) Config page
+# 1) Configuration page
 st.set_page_config(page_title="Clickbait & CTR Predictor", layout="centered")
+st.title("💡 Détecteur de Clickbait & CTR Prédictif")
 
 # 2) Constantes âge & mapping genre
 MEDIAN_AGE = 35.0
 MAX_AGE    = 80.0
 gender_map = {"Male":0, "Female":1, "Unknown":2}
 
-# 3) Titre
-st.title("💡 Détecteur de Clickbait & CTR")
-
-# 4) Inputs utilisateur
+# 3) Inputs utilisateur
 texte = st.text_area("📝 Texte publicitaire", height=150)
 age   = st.slider("🎯 Âge cible", 18.0, 99.0, 30.0)
 genre = st.selectbox("👤 Genre cible", list(gender_map.keys()))
 
-# 5) Prédiction
+# 4) Prédiction
 if st.button("🚀 Prédire"):
     if not texte.strip():
         st.error("Le texte ne peut pas être vide.")
