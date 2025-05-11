@@ -70,11 +70,11 @@ ax.scatter(
         df_res["P(clickbait)"].str.rstrip("%").astype(float),
         df_res["CTR prédit"].str.rstrip("%").astype(float),
         c=df_res["color"]
-    )
-    ax.set_xlabel("P(clickbait) (%)")
-    ax.set_ylabel("CTR prédit (%)")
-    ax.set_title("Clickbait vs CTR pour chaque texte")
-    st.pyplot(fig)
+)
+ax.set_xlabel("P(clickbait) (%)")
+ax.set_ylabel("CTR prédit (%)")
+ax.set_title("Clickbait vs CTR pour chaque texte")
+st.pyplot(fig)
 
 
 
