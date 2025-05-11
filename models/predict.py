@@ -5,25 +5,26 @@ import torch.nn.functional as F
 from transformers import BertTokenizer, BertModel
 from huggingface_hub import hf_hub_download
 
-# 0) On travaille en CPU
+# 0) On travaille toujours sur CPU
 DEVICE = torch.device("cpu")
 
-# 1) Token HF
+# 1) Récupère le token HF
 HF_TOKEN = os.getenv("HUGGINGFACE_TOKEN")
 if not HF_TOKEN:
-    raise EnvironmentError("HUGGINGFACE_TOKEN introuvable dans l'environnement.")
+    raise EnvironmentError("HUGGINGFACE_TOKEN introuvable.")
 
 # 2) Tokenizers BERT
-BERT_BASE     = "bert-base-multilingual-cased"
-tokenizer_cb  = BertTokenizer.from_pretrained(BERT_BASE)
-tokenizer_ctr = BertTokenizer.from_pretrained(BERT_BASE)
+BERT = "bert-base-multilingual-cased"
+tokenizer_cb  = BertTokenizer.from_pretrained(BERT)
+tokenizer_ctr = BertTokenizer.from_pretrained(BERT)
 
-# 3) ClickbaitModel
+# ===== ClickbaitModel =====
 CB_REPO = "alexandre-cameron-borges/clickbait-model"
 class ClickbaitModel(nn.Module):
     def __init__(self, n_genders=3):
         super().__init__()
-        self.bert       = BertModel.from_pretrained(BERT_BASE)
+        # Chargement complet et immédiat
+        self.bert       = BertModel.from_pretrained(BERT)
         self.age_fc     = nn.Linear(1, 16)
         self.gender_emb = nn.Embedding(n_genders, 8)
         hid = self.bert.config.hidden_size + 16 + 8
@@ -33,6 +34,7 @@ class ClickbaitModel(nn.Module):
             nn.Dropout(0.1),
             nn.Linear(64, 1)
         )
+
     def forward(self, input_ids, attention_mask, age, gender):
         out = self.bert(input_ids=input_ids, attention_mask=attention_mask).pooler_output
         a   = F.relu(self.age_fc(age.unsqueeze(1)))
@@ -48,22 +50,31 @@ def predict_cb(text: str, age_norm: float, gender_id: int) -> float:
         _cb_model = ClickbaitModel(n_genders=3)
         _cb_model.load_state_dict(torch.load(path, map_location="cpu"))
         _cb_model.eval()
+        # Warm-up complet pour matérialiser tous les poids
+        dummy_ids  = torch.zeros(1, 128, dtype=torch.long)
+        dummy_mask = torch.zeros_like(dummy_ids)
+        dummy_age  = torch.tensor([0.0])
+        dummy_gen  = torch.tensor([0])
+        with torch.no_grad():
+            _cb_model(dummy_ids, dummy_mask, dummy_age, dummy_gen)
+
     enc            = tokenizer_cb(
         text, padding="max_length", truncation=True, max_length=128, return_tensors="pt"
     )
     input_ids      = enc.input_ids.to(DEVICE)
     attention_mask = enc.attention_mask.to(DEVICE)
-    age_tensor     = torch.tensor([age_norm], dtype=torch.float, device=DEVICE)
-    gender_tensor  = torch.tensor([gender_id], dtype=torch.long, device=DEVICE)
-    logits         = _cb_model(input_ids, attention_mask, age_tensor, gender_tensor)
+    age_tensor     = torch.tensor([age_norm], dtype=torch.float)
+    gender_tensor  = torch.tensor([gender_id], dtype=torch.long)
+    with torch.no_grad():
+        logits = _cb_model(input_ids, attention_mask, age_tensor, gender_tensor)
     return torch.sigmoid(logits).item()
 
-# 4) CTRModel
+# ===== CTRModel =====
 CTR_REPO = "alexandre-cameron-borges/ctr-model"
 class CTRModel(nn.Module):
     def __init__(self):
         super().__init__()
-        self.bert = BertModel.from_pretrained(BERT_BASE)
+        self.bert = BertModel.from_pretrained(BERT)
         hid = self.bert.config.hidden_size
         self.head = nn.Sequential(
             nn.Linear(hid, 64),
@@ -71,6 +82,7 @@ class CTRModel(nn.Module):
             nn.Dropout(0.1),
             nn.Linear(64, 1)
         )
+
     def forward(self, input_ids, attention_mask):
         out = self.bert(input_ids=input_ids, attention_mask=attention_mask).pooler_output
         return self.head(out).squeeze(-1)
@@ -82,11 +94,4 @@ def predict_ctr(text: str) -> float:
         path       = hf_hub_download(CTR_REPO, "best_ctr_model.pt", token=HF_TOKEN)
         _ctr_model = CTRModel()
         _ctr_model.load_state_dict(torch.load(path, map_location="cpu"))
-        _ctr_model.eval()
-    enc            = tokenizer_ctr(
-        text, padding="max_length", truncation=True, max_length=128, return_tensors="pt"
-    )
-    input_ids      = enc.input_ids.to(DEVICE)
-    attention_mask = enc.attention_mask.to(DEVICE)
-    val            = _ctr_model(input_ids, attention_mask)
-    return float(val.item())
+
