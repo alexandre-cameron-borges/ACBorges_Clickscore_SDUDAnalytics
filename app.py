@@ -1,4 +1,5 @@
-import os, streamlit as st
+import os
+import streamlit as st
 from huggingface_hub import login
 from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassification
 
