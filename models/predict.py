@@ -1,15 +1,64 @@
 import os
 import torch
-import torch.nn as nn, torch.nn.functional as F
+import torch.nn as nn
+import torch.nn.functional as F
 from transformers import BertTokenizer, BertModel
 from huggingface_hub import hf_hub_download
 
 HF_TOKEN = os.getenv("HUGGINGFACE_TOKEN")
+if not HF_TOKEN:
+    raise EnvironmentError("HUGGINGFACE_TOKEN non défini dans l'environnement.")
 
-# --- 1) Clickbait Model ---
-CB_REPO      = "alexandre-cameron-borges/clickbait-model"
-tokenizer_cb = BertTokenizer.from_pretrained(CB_REPO, use_auth_token=HF_TOKEN)
+# Références de repo HF
+CB_REPO  = "alexandre-cameron-borges/clickbait-model"
+CTR_REPO = "alexandre-cameron-borges/ctr-model"
 
+# Stockage lazy
+_cb_model = None
+_tokenizer_cb = None
+
+_ctr_model = None
+_tokenizer_ctr = None
+
+def predict_cb(text: str, age_norm: float, gender_id: int) -> float:
+    global _cb_model, _tokenizer_cb
+    # 1) Instancier tokenizer + modèle si premier appel
+    if _cb_model is None:
+        _tokenizer_cb = BertTokenizer.from_pretrained(CB_REPO, use_auth_token=HF_TOKEN)
+        path = hf_hub_download(CB_REPO, "best_cb_model.pt", token=HF_TOKEN)
+        _cb_model = ClickbaitModel(n_genders=3)
+        _cb_model.load_state_dict(torch.load(path, map_location="cpu"))
+        _cb_model.eval()
+
+    # 2) Tokenisation
+    enc = _tokenizer_cb(
+        text, padding="max_length", truncation=True, max_length=128, return_tensors="pt"
+    )
+    # 3) Inférence
+    logits = _cb_model(
+        enc.input_ids, enc.attention_mask,
+        torch.tensor(age_norm), torch.tensor(gender_id)
+    )
+    return torch.sigmoid(logits).item()
+
+
+def predict_ctr(text: str) -> float:
+    global _ctr_model, _tokenizer_ctr
+    if _ctr_model is None:
+        _tokenizer_ctr = BertTokenizer.from_pretrained(CTR_REPO, use_auth_token=HF_TOKEN)
+        path = hf_hub_download(CTR_REPO, "best_ctr_model.pt", token=HF_TOKEN)
+        _ctr_model = CTRModel()
+        _ctr_model.load_state_dict(torch.load(path, map_location="cpu"))
+        _ctr_model.eval()
+
+    enc = _tokenizer_ctr(
+        text, padding="max_length", truncation=True, max_length=128, return_tensors="pt"
+    )
+    val = _ctr_model(enc.input_ids, enc.attention_mask)
+    return float(val.item())
+
+
+# Définition des classes (en bas du fichier)
 class ClickbaitModel(nn.Module):
     def __init__(self, n_genders=3):
         super().__init__()
@@ -28,29 +77,6 @@ class ClickbaitModel(nn.Module):
         x   = torch.cat([out, a, g], dim=1)
         return self.head(x).squeeze(-1)
 
-_cb_model = None
-def predict_cb(text: str, age_norm: float, gender_id: int) -> float:
-    global _cb_model
-    if _cb_model is None:
-        path = hf_hub_download(
-            repo_id=CB_REPO, filename="best_cb_model.pt", token=HF_TOKEN
-        )
-        _cb_model = ClickbaitModel(n_genders=3)
-        _cb_model.load_state_dict(torch.load(path, map_location="cpu"))
-        _cb_model.eval()
-    enc    = tokenizer_cb(
-        text, padding="max_length", truncation=True, max_length=128, return_tensors="pt"
-    )
-    logits = _cb_model(
-        enc.input_ids, enc.attention_mask,
-        torch.tensor(age_norm), torch.tensor(gender_id)
-    )
-    return torch.sigmoid(logits).item()
-
-
-# --- 2) CTR Model ---
-CTR_REPO      = "alexandre-cameron-borges/ctr-model"
-tokenizer_ctr = BertTokenizer.from_pretrained(CTR_REPO, use_auth_token=HF_TOKEN)
 
 class CTRModel(nn.Module):
     def __init__(self):
@@ -64,20 +90,3 @@ class CTRModel(nn.Module):
     def forward(self, input_ids, attention_mask):
         out = self.bert(input_ids, attention_mask).pooler_output
         return self.head(out).squeeze(-1)
-
-_ctr_model = None
-def predict_ctr(text: str) -> float:
-    global _ctr_model
-    if _ctr_model is None:
-        path = hf_hub_download(
-            repo_id=CTR_REPO, filename="best_ctr_model.pt", token=HF_TOKEN
-        )
-        _ctr_model = CTRModel()
-        _ctr_model.load_state_dict(torch.load(path, map_location="cpu"))
-        _ctr_model.eval()
-    enc = tokenizer_ctr(
-        text, padding="max_length", truncation=True, max_length=128, return_tensors="pt"
-    )
-    val = _ctr_model(enc.input_ids, enc.attention_mask)
-    return float(val.item())
-
