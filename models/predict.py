@@ -1,72 +1,89 @@
 import os
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 from transformers import BertTokenizer, BertModel
 from huggingface_hub import hf_hub_download
 
-# 1) Architecture identique à celle utilisée à l'entraînement
-class ClickbaitModel(torch.nn.Module):
-    def __init__(self, n_genders: int):
+# --- 1) Chargement & définition du modèle Clickbait ---
+CB_REPO = "alexandre-cameron-borges/clickbait-model"
+tokenizer_cb = BertTokenizer.from_pretrained(CB_REPO, use_auth_token=True)
+
+class ClickbaitModel(nn.Module):
+    def __init__(self, n_genders=3):
         super().__init__()
-        self.bert       = BertModel.from_pretrained("bert-base-multilingual-cased")
-        self.age_fc     = torch.nn.Linear(1, 16)
-        self.gender_emb = torch.nn.Embedding(n_genders, 8)
-        hid_size = self.bert.config.hidden_size + 16 + 8
-        self.head = torch.nn.Sequential(
-            torch.nn.Linear(hid_size, 64),
-            torch.nn.ReLU(),
-            torch.nn.Dropout(0.1),
-            torch.nn.Linear(64, 1),
+        self.bert       = BertModel.from_pretrained(CB_REPO, use_auth_token=True)
+        self.age_fc     = nn.Linear(1, 16)
+        self.gender_emb = nn.Embedding(n_genders, 8)
+        hid = self.bert.config.hidden_size + 16 + 8
+        self.head = nn.Sequential(
+            nn.Linear(hid, 64), nn.ReLU(), nn.Dropout(0.1),
+            nn.Linear(64, 1)
         )
 
     def forward(self, input_ids, attention_mask, age, gender):
-        # Extraction BERT
-        out = self.bert(input_ids=input_ids, attention_mask=attention_mask).pooler_output
-        # Passage âge & genre
+        out = self.bert(input_ids, attention_mask).pooler_output
         a   = F.relu(self.age_fc(age.unsqueeze(1)))
         g   = self.gender_emb(gender)
-        # Concaténation et head
         x   = torch.cat([out, a, g], dim=1)
         return self.head(x).squeeze(-1)
 
-# 2) Tokenizer (on garde celui de Hugging Face)
-tokenizer = BertTokenizer.from_pretrained("bert-base-multilingual-cased")
-
-# 3) Chargement lazy du modèle depuis HF Hub
-_model = None
-def _load_model():
-    global _model
-    if _model is None:
-        # Récupère ton token défini en env var
-        hf_token = os.environ.get("HUGGINGFACE_TOKEN")
-        # Télécharge le checkpoint .pt
-        local_path = hf_hub_download(
-            repo_id="alexandre-cameron-borges/clickbait-model",
-            filename="best_cb_model.pt",
-            token=hf_token
-        )
-        # Instancie la classe et charge les poids
-        _model = ClickbaitModel(n_genders=3)
-        state_dict = torch.load(local_path, map_location="cpu")
-        _model.load_state_dict(state_dict)
-        _model.eval()
-    return _model
-
-# 4) Fonction exposée pour l’inférence
+_cb_model = None
 def predict_cb(text: str, age_norm: float, gender_id: int) -> float:
-    model = _load_model()
-    enc   = tokenizer(
-        text,
-        padding="max_length",
-        truncation=True,
-        max_length=128,
+    global _cb_model
+    if _cb_model is None:
+        path = hf_hub_download(
+            repo_id=CB_REPO,
+            filename="best_cb_model.pt",
+            use_auth_token=True
+        )
+        _cb_model = ClickbaitModel(n_genders=3)
+        _cb_model.load_state_dict(torch.load(path, map_location="cpu"))
+        _cb_model.eval()
+    enc = tokenizer_cb(
+        text, padding="max_length", truncation=True, max_length=128,
         return_tensors="pt"
     )
-    logits = model(
-        enc.input_ids,
-        enc.attention_mask,
-        torch.tensor([age_norm]),
-        torch.tensor([gender_id])
+    logits = _cb_model(
+        enc.input_ids, enc.attention_mask,
+        torch.tensor(age_norm), torch.tensor(gender_id)
     )
-    # Renvoie une probabilité [0,1]
     return torch.sigmoid(logits).item()
+
+
+# --- 2) Chargement & définition du modèle CTR ---
+CTR_REPO = "alexandre-cameron-borges/ctr-model"
+tokenizer_ctr = BertTokenizer.from_pretrained(CTR_REPO, use_auth_token=True)
+
+class CTRModel(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.bert = BertModel.from_pretrained(CTR_REPO, use_auth_token=True)
+        h = self.bert.config.hidden_size
+        self.head = nn.Sequential(
+            nn.Linear(h, 64), nn.ReLU(), nn.Dropout(0.1),
+            nn.Linear(64, 1)
+        )
+
+    def forward(self, input_ids, attention_mask):
+        out = self.bert(input_ids, attention_mask).pooler_output
+        return self.head(out).squeeze(-1)
+
+_ctr_model = None
+def predict_ctr(text: str) -> float:
+    global _ctr_model
+    if _ctr_model is None:
+        path = hf_hub_download(
+            repo_id=CTR_REPO,
+            filename="best_ctr_model.pt",
+            use_auth_token=True
+        )
+        _ctr_model = CTRModel()
+        _ctr_model.load_state_dict(torch.load(path, map_location="cpu"))
+        _ctr_model.eval()
+    enc = tokenizer_ctr(
+        text, padding="max_length", truncation=True, max_length=128,
+        return_tensors="pt"
+    )
+    val = _ctr_model(enc.input_ids, enc.attention_mask)
+    return float(val.item())
