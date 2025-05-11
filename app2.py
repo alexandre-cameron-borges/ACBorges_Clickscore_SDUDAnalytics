@@ -1,15 +1,15 @@
 import os
 import streamlit as st
 import pandas as pd
-from models.predict import predict_cb, predict_ctr
-import plotly.express as px
+import altair as alt
+from models.predict import predict_cb, predict_ctr, MEDIAN_AGE, MAX_AGE
 
-# Configuration
+# Configuration de la page
 os.environ["HUGGINGFACE_TOKEN"] = st.secrets["HUGGINGFACE_TOKEN"]
 st.set_page_config(page_title="Clickbait & CTR Predictor", layout="centered")
 st.title("💡 Détecteur de Clickbait & CTR Prédictif")
 
-# Inputs
+# Sélecteurs utilisateur
 gender_map = {"Male": 0, "Female": 1, "Unknown": 2}
 age = st.slider("🎯 Âge cible", 18, 99, 30)
 genre = st.selectbox("👤 Genre cible", list(gender_map.keys()))
@@ -18,14 +18,14 @@ if not uploaded_file:
     st.info("Veuillez importer un fichier CSV.")
     st.stop()
 
-# Data
+# Chargement et validation
 df = pd.read_csv(uploaded_file)
 if not {"image", "texte"}.issubset(df.columns):
     st.error("Les colonnes requises sont : image, texte")
     st.stop()
 df = df.head(10)
 
-# Prediction & Visualization
+# Prédictions et affichages
 if st.button("🚀 Prédire"):
     age_norm = (age - MEDIAN_AGE) / (MAX_AGE - MEDIAN_AGE)
     gender_id = gender_map[genre]
@@ -40,21 +40,28 @@ if st.button("🚀 Prédire"):
             "CTR prédit": p_ctr,
             "Classification": label
         })
-    res_df = pd.DataFrame(records)
+    result_df = pd.DataFrame(records)
 
-    # Scatterplot
-    fig = px.scatter(
-        res_df,
-        x="P(clickbait)",
-        y="CTR prédit",
-        color="Classification",
-        hover_data=["Texte"],
-        labels={"P(clickbait)": "Probabilité Clickbait", "CTR prédit": "CTR Prédit"}
+    # Scatterplot Altair
+    chart = (
+        alt.Chart(result_df)
+        .mark_circle(size=60)
+        .encode(
+            x=alt.X("P(clickbait):Q", title="Probabilité Clickbait"),
+            y=alt.Y("CTR prédit:Q", title="CTR Prédit"),
+            color=alt.Color("Classification:N", legend=alt.Legend(title="Classe")),
+            tooltip=[
+                alt.Tooltip("Texte:N", title="Texte"),
+                alt.Tooltip("P(clickbait):Q", title="P(clickbait)", format=".1%"),
+                alt.Tooltip("CTR prédit:Q", title="CTR prédit", format=".1%")
+            ]
+        )
+        .properties(width="container", height=400)
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.altair_chart(chart, use_container_width=True)
 
-    # Table with formatted percentages
-    display_df = res_df.copy()
+    # Tableau formaté
+    display_df = result_df.copy()
     display_df["P(clickbait)"] = display_df["P(clickbait)"].map("{:.1%}".format)
     display_df["CTR prédit"] = display_df["CTR prédit"].map("{:.1%}".format)
     st.table(display_df)
