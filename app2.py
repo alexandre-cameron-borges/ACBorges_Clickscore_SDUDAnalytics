@@ -22,6 +22,19 @@ MEDIAN_AGE = 35.0
 MAX_AGE    = 80.0
 gender_map = {"Male":0, "Female":1, "Unknown":2}
 
+# 3.1) Bornes TruthMean personnalisées
+LOW_TM_THRESH  = 0.55   # score < 0.55 → LowTM
+HIGH_TM_THRESH = 0.75   # score ≥ 0.75 → HighTM
+
+def categorize_tm(score: float) -> str:
+    """Renvoie la classe TruthMean selon les bornes définies."""
+    if score < LOW_TM_THRESH:
+        return f"LowTM (<{LOW_TM_THRESH})"
+    elif score < HIGH_TM_THRESH:
+        return f"MidTM ({LOW_TM_THRESH}–{HIGH_TM_THRESH})"
+    else:
+        return f"HighTM (≥{HIGH_TM_THRESH})"
+
 # 4) Sélecteurs globaux côte-à-côte
 col_age, col_genre = st.columns([0.6, 0.4])
 with col_age:
@@ -29,7 +42,19 @@ with col_age:
 with col_genre:
     genre = st.selectbox("👤 Genre cible", list(gender_map.keys()))
 
-# 5) CSV uploader
+# 5) Légende des bornes TruthMean
+legend = pd.DataFrame({
+    "Classe TruthMean": ["LowTM", "MidTM", "HighTM"],
+    "Borne score":      [
+        f"< {LOW_TM_THRESH}",
+        f"{LOW_TM_THRESH}–{HIGH_TM_THRESH}",
+        f"≥ {HIGH_TM_THRESH}"
+    ]
+})
+st.subheader("🔖 Légende TruthMean")
+st.table(legend)
+
+# 6) CSV uploader
 uploaded_file = st.file_uploader("📂 Importez votre CSV (colonnes: image, texte)", type="csv")
 if not uploaded_file:
     st.info("Veuillez importer un fichier CSV.")
@@ -41,26 +66,23 @@ if not {"image","texte"}.issubset(df.columns):
     st.stop()
 df = df.head(10)
 
-# 6) Batch prédiction
+# 7) Batch prédiction
 if st.button("🚀 Prédire"):
     age_norm  = (age - MEDIAN_AGE) / (MAX_AGE - MEDIAN_AGE)
     gender_id = gender_map[genre]
     results = []
 
-    tm_labels = {
-        0: "LowTM",       # truthMean basse (<0.6)
-        1: "MidTM",       # truthMean moyenne (0.6–0.65)
-        2: "HighTM"       # truthMean haute (>0.65)
-    }
-
     for _, row in df.iterrows():
-        p_tm  = predict_tm(row["texte"], age_norm, gender_id)
-        p_ctr = predict_ctr(row["texte"])
-        label = tm_labels[p_tm]
+        tm_id, tm_score = predict_tm(row["texte"], age_norm, gender_id)
+        p_ctr           = predict_ctr(row["texte"])
+
+        label_tm = categorize_tm(tm_score)
+
         results.append({
-            "Texte":          row["texte"],
-            "Classification": label,
-            "CTR prédit":     f"{p_ctr:.2f}%"
+            "Texte":             row["texte"],
+            "TruthMean prédit":  label_tm,
+            "TruthMean score":   f"{tm_score:.2f}",
+            "CTR prédit":        f"{p_ctr:.2f}%"
         })
 
     # DataFrame et conversion CTR en float pour tri
@@ -70,28 +92,34 @@ if st.button("🚀 Prédire"):
 
     # Affichage du tableau trié
     st.subheader("🔽 Tableau trié par CTR prédit (décroissant)")
-    st.table(df_res[["Texte","Classification","CTR prédit"]])
+    st.table(df_res[[
+        "Texte",
+        "TruthMean prédit",
+        "TruthMean score",
+        "CTR prédit"
+    ]])
 
     # Visualisations
-    color_map = {"LowTM":"green","MidTM":"orange","HighTM":"red"}
-    df_res["color"] = df_res["Classification"].map(color_map)
+    color_map = {
+        f"LowTM (<{LOW_TM_THRESH})": "green",
+        f"MidTM ({LOW_TM_THRESH}–{HIGH_TM_THRESH})": "orange",
+        f"HighTM (≥{HIGH_TM_THRESH})": "red"
+    }
+    df_res["color"] = df_res["TruthMean prédit"].map(color_map)
 
-    class_encode = {"LowTM":0,"MidTM":1,"HighTM":2}
-    x = df_res["Classification"].map(class_encode) + np.random.normal(0, 0.05, len(df_res))
+    class_encode = {k: i for i, k in enumerate(color_map.keys())}
+    x = df_res["TruthMean prédit"].map(class_encode) \
+        + np.random.normal(0, 0.05, len(df_res))
 
     fig, ax = plt.subplots()
-    ax.scatter(
-        x,
-        df_res["CTR_num"],
-        c=df_res["color"]
-    )
-    ax.set_xticks([0,1,2])
-    ax.set_xticklabels(["LowTM","MidTM","HighTM"])
+    ax.scatter(x, df_res["CTR_num"], c=df_res["color"])
+    ax.set_xticks(range(len(color_map)))
+    ax.set_xticklabels(color_map.keys(), rotation=45)
     ax.set_ylabel("CTR prédit (%)")
-    ax.set_title("CTR vs Classification")
+    ax.set_title("CTR vs TruthMean")
     plt.tight_layout()
 
-    counts = df_res["Classification"].value_counts().reindex(color_map.keys(), fill_value=0)
+    counts = df_res["TruthMean prédit"].value_counts().reindex(color_map.keys(), fill_value=0)
     fig2, ax2 = plt.subplots()
     ax2.pie(
         counts,
@@ -110,4 +138,3 @@ if st.button("🚀 Prédire"):
     with col2:
         st.subheader("Pie Chart")
         st.pyplot(fig2)
-
