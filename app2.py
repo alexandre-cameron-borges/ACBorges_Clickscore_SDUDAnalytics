@@ -73,7 +73,7 @@ if st.button("🚀 Prédire"):
     results = []
 
     for _, row in df.iterrows():
-        tm_id, tm_score = predict_tm(row["texte"], age_norm, gender_id)
+        tm_id = predict_tm(row["texte"], age_norm, gender_id)
         p_ctr           = predict_ctr(row["texte"])
 
         label_tm = categorize_tm(tm_score)
@@ -81,7 +81,6 @@ if st.button("🚀 Prédire"):
         results.append({
             "Texte":             row["texte"],
             "TruthMean prédit":  label_tm,
-            "TruthMean score":   f"{tm_score:.2f}",
             "CTR prédit":        f"{p_ctr:.2f}%"
         })
 
