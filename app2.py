@@ -39,6 +39,7 @@ df = pd.read_csv(uploaded_file)
 if not {"image","texte"}.issubset(df.columns):
     st.error("Les colonnes requises sont : image, texte")
     st.stop()
+# Limiter à 10 lignes pour l'exemple
 df = df.head(10)
 
 # 6) Batch prédiction
@@ -50,46 +51,44 @@ if st.button("🚀 Prédire"):
     for _, row in df.iterrows():
         p_tm  = predict_tm(row["texte"], age_norm, gender_id)  # 0/1/2
         p_ctr = predict_ctr(row["texte"])
-        # mapping du tm_label en étiquette
         label = {0:"❗ Nobait", 1:"Softbait", 2:"✅ Clickbait"}[p_tm]
-
         results.append({
             "Texte":          row["texte"],
             "Classification": label,
             "CTR prédit":     f"{p_ctr:.1%}"
         })
 
-    st.table(pd.DataFrame(results))
-
-
-# DataFrame résultat
+    # Création du DataFrame résultat et conversion pour tri
     df_res = pd.DataFrame(results)
+    df_res["CTR_num"] = df_res["CTR prédit"].str.rstrip("%").astype(float)
+    # Tri décroissant par CTR
+    df_res = df_res.sort_values(by="CTR_num", ascending=False)
 
-# 1) Couleurs selon le nouveau label
-    color_map = {
-        "❗ Nobait":   "red",
-        "Softbait":   "orange",
-        "✅ Clickbait":"green"
-    }
+    # Affichage du tableau trié
+    st.subheader("Tableau trié par CTR prédit (décroissant)")
+    st.table(df_res[["Texte","Classification","CTR prédit"]])
+
+    # ------- Visualisations -------
+    # Couleurs selon label
+    color_map = {"❗ Nobait":"red","Softbait":"orange","✅ Clickbait":"green"}
     df_res["color"] = df_res["Classification"].map(color_map)
 
-# 2) Scatter CTR vs Classification (jitter sur l’axe X)
+    # Scatter CTR vs Classification (jitter sur l’axe X)
     class_encode = {"❗ Nobait":0, "Softbait":1, "✅ Clickbait":2}
     x = df_res["Classification"].map(class_encode) + np.random.normal(0, 0.05, len(df_res))
-
     fig, ax = plt.subplots()
     ax.scatter(
-            x,
-            df_res["CTR prédit"].str.rstrip("%").astype(float),
-            c=df_res["color"]
-        )
+        x,
+        df_res["CTR_num"],
+        c=df_res["color"]
+    )
     ax.set_xticks([0,1,2])
     ax.set_xticklabels(["Nobait","Softbait","Clickbait"])
     ax.set_ylabel("CTR prédit (%)")
     ax.set_title("CTR vs Classification")
     plt.tight_layout()
 
-# 3) Pie chart des 3 classes
+    # Pie chart des classes
     counts = df_res["Classification"].value_counts().reindex(color_map.keys(), fill_value=0)
     fig2, ax2 = plt.subplots()
     ax2.pie(
@@ -102,8 +101,7 @@ if st.button("🚀 Prédire"):
     ax2.set_title("Répartition des classes")
     ax2.axis("equal")
 
-
-    # === Affichage côte-à-côte des graphiques ===
+    # Affichage côte-à-côte
     col1, col2 = st.columns([0.6, 0.4])
     with col1:
         st.subheader("Scatterplot")
@@ -111,3 +109,4 @@ if st.button("🚀 Prédire"):
     with col2:
         st.subheader("Pie Chart")
         st.pyplot(fig2)
+
