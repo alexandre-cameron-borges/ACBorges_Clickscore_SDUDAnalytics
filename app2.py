@@ -35,7 +35,6 @@ if not uploaded_file:
     st.info("Veuillez importer un fichier CSV.")
     st.stop()
 
-# Lecture du CSV
 df = pd.read_csv(uploaded_file)
 if not {"image","texte"}.issubset(df.columns):
     st.error("Les colonnes requises sont : image, texte")
@@ -51,24 +50,25 @@ if st.button("🚀 Prédire"):
 
     for _, row in df.iterrows():
         p_tm  = predict_tm(row["texte"], age_norm, gender_id)
-        # predict_ctr retourne une valeur en pourcentage (ex: 50.0 pour 50%)
-        raw_ctr = predict_ctr(row["texte"])
-        p_ctr = raw_ctr / 100  # convertir en fraction (ex: 0.5 pour 0.5%)
+        p_ctr = predict_ctr(row["texte"])
         label = {0:"❗ Nobait", 1:"Softbait", 2:"✅ Clickbait"}[p_tm]
         results.append({
             "Texte":          row["texte"],
             "Classification": label,
-            "CTR prédit":     f"{p_ctr:.2f}%"  # affichage 0.50% etc.
+            "CTR prédit":     f"{p_ctr:.2f}%"
         })
 
-    # DataFrame et tri
+    # DataFrame et conversion CTR en float pour tri
     df_res = pd.DataFrame(results)
     df_res["CTR_num"] = df_res["CTR prédit"].str.rstrip("%").astype(float)
+    # Tri décroissant
     df_res = df_res.sort_values(by="CTR_num", ascending=False)
 
     # Affichage du tableau trié
     st.subheader("🔽 Tableau trié par CTR prédit (décroissant)")
-    st.table(df_res[["Texte","Classification","CTR prédit"]])
+    st.table(
+        df_res[["Texte","Classification","CTR prédit"]]
+    )
 
     # Visualisations
     color_map = {"❗ Nobait":"red","Softbait":"orange","✅ Clickbait":"green"}
@@ -78,7 +78,11 @@ if st.button("🚀 Prédire"):
     x = df_res["Classification"].map(class_encode) + np.random.normal(0, 0.05, len(df_res))
 
     fig, ax = plt.subplots()
-    ax.scatter(x, df_res["CTR_num"], c=df_res["color"])
+    ax.scatter(
+        x,
+        df_res["CTR_num"],
+        c=df_res["color"]
+    )
     ax.set_xticks([0,1,2])
     ax.set_xticklabels(["Nobait","Softbait","Clickbait"])
     ax.set_ylabel("CTR prédit (%)")
@@ -87,8 +91,13 @@ if st.button("🚀 Prédire"):
 
     counts = df_res["Classification"].value_counts().reindex(color_map.keys(), fill_value=0)
     fig2, ax2 = plt.subplots()
-    ax2.pie(counts, labels=counts.index, autopct="%1.1f%%",
-            startangle=90, colors=[color_map[l] for l in counts.index])
+    ax2.pie(
+        counts,
+        labels=counts.index,
+        autopct="%1.1f%%",
+        startangle=90,
+        colors=[color_map[l] for l in counts.index]
+    )
     ax2.set_title("Répartition des classes")
     ax2.axis("equal")
 
