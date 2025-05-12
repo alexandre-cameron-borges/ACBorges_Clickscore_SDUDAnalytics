@@ -57,9 +57,10 @@ class CTRModel(nn.Module):
         self.base     = AutoModel.from_pretrained(backbone_id, **hf_kwargs)
         cfg         = AutoConfig.from_pretrained(backbone_id, **hf_kwargs)
         self.reg_head = nn.Linear(cfg.hidden_size, 1)
+
     def forward(self, input_ids, attention_mask):
         out = self.base(input_ids=input_ids, attention_mask=attention_mask)
-        return torch.sigmoid(self.reg_head(out.pooler_output)).squeeze(-1)
+        return self.reg_head(out.pooler_output).squeeze(-1)  # retourne le logit brut
 
 # 4️⃣ Lazy-loading + téléchargement des poids
 CLICKBAIT_ID = "alexandre-cameron-borges/clickbait-model"
@@ -82,18 +83,13 @@ def _load_cb_model():
             BACKBONE_ID, N_GENDERS, n_tm_classes=3
         ).to(device)
         state = torch.load(ckpt, map_location=device)
-# Ne garder que les clés compatibles entre checkpoint et modèle
         model_dict      = model.state_dict()
         pretrained_dict = {
-        k: v for k, v in state.items()
-        if k in model_dict and v.shape == model_dict[k].shape
+            k: v for k, v in state.items()
+            if k in model_dict and v.shape == model_dict[k].shape
         }
-# Mettre à jour uniquement ces clés
         model_dict.update(pretrained_dict)
         model.load_state_dict(model_dict)
-
-        print(f"✅ Chargé {len(pretrained_dict)}/{len(model_dict)} clés depuis le checkpoint")
-
         model.eval()
         _cb_model = model
     return _cb_model
@@ -109,8 +105,10 @@ def _load_ctr_model():
         model = CTRModel(BACKBONE_ID).to(device)
         state = torch.load(ckpt, map_location=device)
         missing, unexpected = model.load_state_dict(state, strict=False)
-        if missing:    print(f"⚠️ Missing keys in CTR model: {missing}")
-        if unexpected: print(f"⚠️ Unexpected keys in CTR model: {unexpected}")
+        if missing:
+            print(f"⚠️ Missing keys in CTR model: {missing}")
+        if unexpected:
+            print(f"⚠️ Unexpected keys in CTR model: {unexpected}")
         model.eval()
         _ctr_model = model
     return _ctr_model
@@ -147,12 +145,19 @@ def predict_tm(text: str, age_norm: float, gender_id: int) -> int:
 
 def predict_ctr(text: str) -> float:
     """
-    Retourne la probabilité CTR.
+    Retourne le CTR en % : sigmoid(logit) * 100.
     """
     model = _load_ctr_model()
-    enc   = tokenizer(text, padding="max_length", truncation=True,
-                      max_length=128, return_tensors="pt")
+    model.eval()
+    enc = tokenizer(
+        text,
+        padding="max_length",
+        truncation=True,
+        max_length=128,
+        return_tensors="pt"
+    )
     ids, mask = enc.input_ids.to(device), enc.attention_mask.to(device)
     with torch.no_grad():
-        return model(ids, mask).item()
-
+        logit = model(ids, mask)            # logit brut
+        prob  = torch.sigmoid(logit)        # activation en post-processing
+        return float(prob.item() * 100)     # conversion en pourcentage
