@@ -55,7 +55,7 @@ if st.button("🚀 Prédire"):
         results.append({
             "Texte":          row["texte"],
             "Classification": label,
-            "CTR prédit":     f"{p_ctr:.1%}"
+            "CTR prédit":     f"{p_ctr:.2%}"
         })
 
     # DataFrame et conversion CTR en float pour tri
