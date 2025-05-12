@@ -11,7 +11,7 @@ if "HUGGINGFACE_TOKEN" not in st.secrets:
 os.environ["HUGGINGFACE_TOKEN"] = st.secrets["HUGGINGFACE_TOKEN"]
 
 # 1) Imports
-from models.predict import predict_cb, predict_tm, predict_ctr
+from models.predict import predict_tm, predict_ctr
 
 # 2) UI Setup
 st.set_page_config(page_title="Clickbait & CTR Predictor", layout="centered")
@@ -39,7 +39,6 @@ df = pd.read_csv(uploaded_file)
 if not {"image","texte"}.issubset(df.columns):
     st.error("Les colonnes requises sont : image, texte")
     st.stop()
-# Limiter à 10 lignes pour faciliter l'affichage
 df = df.head(10)
 
 # 6) Batch prédiction
@@ -48,10 +47,16 @@ if st.button("🚀 Prédire"):
     gender_id = gender_map[genre]
     results = []
 
+    tm_labels = {
+        0: "LowTM",       # truthMean basse (<0.6)
+        1: "MidTM",       # truthMean moyenne (0.6–0.65)
+        2: "HighTM"       # truthMean haute (>0.65)
+    }
+
     for _, row in df.iterrows():
         p_tm  = predict_tm(row["texte"], age_norm, gender_id)
         p_ctr = predict_ctr(row["texte"])
-        label = {0:"❗ Nobait", 1:"Softbait", 2:"✅ Clickbait"}[p_tm]
+        label = tm_labels[p_tm]
         results.append({
             "Texte":          row["texte"],
             "Classification": label,
@@ -61,20 +66,17 @@ if st.button("🚀 Prédire"):
     # DataFrame et conversion CTR en float pour tri
     df_res = pd.DataFrame(results)
     df_res["CTR_num"] = df_res["CTR prédit"].str.rstrip("%").astype(float)
-    # Tri décroissant
     df_res = df_res.sort_values(by="CTR_num", ascending=False)
 
     # Affichage du tableau trié
     st.subheader("🔽 Tableau trié par CTR prédit (décroissant)")
-    st.table(
-        df_res[["Texte","Classification","CTR prédit"]]
-    )
+    st.table(df_res[["Texte","Classification","CTR prédit"]])
 
     # Visualisations
-    color_map = {"❗ Nobait":"red","Softbait":"orange","✅ Clickbait":"green"}
+    color_map = {"LowTM":"green","MidTM":"orange","HighTM":"red"}
     df_res["color"] = df_res["Classification"].map(color_map)
 
-    class_encode = {"❗ Nobait":0, "Softbait":1, "✅ Clickbait":2}
+    class_encode = {"LowTM":0,"MidTM":1,"HighTM":2}
     x = df_res["Classification"].map(class_encode) + np.random.normal(0, 0.05, len(df_res))
 
     fig, ax = plt.subplots()
@@ -84,7 +86,7 @@ if st.button("🚀 Prédire"):
         c=df_res["color"]
     )
     ax.set_xticks([0,1,2])
-    ax.set_xticklabels(["Nobait","Softbait","Clickbait"])
+    ax.set_xticklabels(["LowTM","MidTM","HighTM"])
     ax.set_ylabel("CTR prédit (%)")
     ax.set_title("CTR vs Classification")
     plt.tight_layout()
@@ -98,7 +100,7 @@ if st.button("🚀 Prédire"):
         startangle=90,
         colors=[color_map[l] for l in counts.index]
     )
-    ax2.set_title("Répartition des classes")
+    ax2.set_title("Répartition des TruthMean (3 classes)")
     ax2.axis("equal")
 
     col1, col2 = st.columns([0.6, 0.4])
@@ -108,3 +110,4 @@ if st.button("🚀 Prédire"):
     with col2:
         st.subheader("Pie Chart")
         st.pyplot(fig2)
+
