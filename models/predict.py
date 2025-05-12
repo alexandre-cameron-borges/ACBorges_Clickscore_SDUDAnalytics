@@ -131,7 +131,7 @@ def predict_cb(text: str, age_norm: float, gender_id: int) -> float:
 def predict_tm(text: str, age_norm: float, gender_id: int) -> int:
     """
     Retourne l'indice tm_id :
-      0 = low (<0.6), 1 = mid (0.6–0.65), 2 = high (>0.65)
+      0 = low (<0.55), 1 = mid (0.55–0.60), 2 = high (>0.60)
     """
     model   = _load_cb_model()
     enc     = tokenizer(text, padding="max_length", truncation=True,
