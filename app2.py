@@ -3,34 +3,34 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-import streamlit.components.v1 as components  # ← pour html JS
+import streamlit.components.v1 as components  # pour HTML/JS
 
-# 0) Token HF
+# 0️⃣ Token HF
 if "HUGGINGFACE_TOKEN" not in st.secrets:
     st.error("⚠️ Vous devez définir HUGGINGFACE_TOKEN dans vos Secrets Streamlit.")
     st.stop()
 os.environ["HUGGINGFACE_TOKEN"] = st.secrets["HUGGINGFACE_TOKEN"]
 
-# 1) Imports prédiction
+# 1️⃣ Imports prédiction
 from models.predict import predict_cb, predict_tm, predict_ctr
 
-# 2) UI Setup
+# 2️⃣ UI Setup
 st.set_page_config(page_title="Clickbait & CTR Predictor", layout="centered")
 st.title("💡 Détecteur de Clickbait & CTR Prédictif")
 
-# 3) Constantes & mapping
+# 3️⃣ Constantes & mapping
 MEDIAN_AGE = 35.0
 MAX_AGE    = 80.0
 gender_map = {"Male":0, "Female":1, "Unknown":2}
 
-# 4) Sélecteurs
+# 4️⃣ Sélecteurs
 col_age, col_genre = st.columns([0.6, 0.4])
 with col_age:
-    age   = st.slider("🎯 Âge cible", 18, 99, 30)
+    age = st.slider("🎯 Âge cible", 18, 99, 30)
 with col_genre:
     genre = st.selectbox("👤 Genre cible", list(gender_map.keys()))
 
-# 5) Upload CSV
+# 5️⃣ Upload CSV
 uploaded_file = st.file_uploader("📂 Importez votre CSV (colonnes: image, texte)", type="csv")
 if not uploaded_file:
     st.info("Veuillez importer un fichier CSV.")
@@ -41,12 +41,12 @@ if not {"image","texte"}.issubset(df.columns):
     st.stop()
 df = df.head(10)
 
-# 6) Batch prédiction + confetti
+# 6️⃣ Prédiction + barre + confetti
 if st.button("🚀 Prédire"):
     age_norm     = (age - MEDIAN_AGE) / (MAX_AGE - MEDIAN_AGE)
     gender_id    = gender_map[genre]
     total        = len(df)
-    progress_bar = st.progress(0, text=f"0 / {total}")
+    progress_bar = st.progress(0, text=f"0/{total}")
     results      = []
 
     with st.spinner("🚀 Prédiction en cours…"):
@@ -59,35 +59,31 @@ if st.button("🚀 Prédire"):
                 "Classification": label,
                 "CTR prédit":     f"{p_ctr:.2f}%"
             })
-            progress_bar.progress(i/total, text=f"{i} / {total}")
+            progress_bar.progress(i/total, text=f"{i}/{total}")
 
     progress_bar.empty()
     st.success("✅ Prédiction terminée !")
 
-    # 🎉 Confetti – hauteur minimale de 200px, fallback inline si pas de CDN
+    # 🎉 Confetti via components.html (hauteur ≥150px)
     js = """
-    (function(){
-      var script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.8.0/dist/confetti.browser.min.js';
-      script.onload = function(){
-        setTimeout(function(){
-          confetti({ particleCount: 200, spread: 60, origin: { y: 0.6 } });
-        }, 0);
-      };
-      document.body.appendChild(script);
-    })();
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.8.0/dist/confetti.browser.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function(){
+        confetti({ particleCount: 200, spread: 60, origin: { y: 0.6 } });
+      });
+    </script>
     """
-    components.html(js, height=200)  # hauteur ≥150px par défaut :contentReference[oaicite:0]{index=0} :contentReference[oaicite:1]{index=1}
+    components.html(js, height=200)
 
-    # Post-traitement et affichage
+    # 7️⃣ Post-traitement & affichage
     df_res = pd.DataFrame(results)
     df_res["CTR_num"] = df_res["CTR prédit"].str.rstrip("%").astype(float)
-    df_res = df_res.sort_values(by="CTR_num", ascending=False)
+    df_res = df_res.sort_values("CTR_num", ascending=False)
 
-    st.subheader("🔽 Tableau trié par CTR prédit (décroissant)")
+    st.subheader("🔽 Tableau trié par CTR prédit")
     st.table(df_res[["Texte","Classification","CTR prédit"]])
 
-    color_map  = {"❗ Nobait":"red","Softbait":"orange","✅ Clickbait":"green"}
+    color_map    = {"❗ Nobait":"red","Softbait":"orange","✅ Clickbait":"green"}
     df_res["color"] = df_res["Classification"].map(color_map)
     class_encode   = {"❗ Nobait":0, "Softbait":1, "✅ Clickbait":2}
     x = df_res["Classification"].map(class_encode) + np.random.normal(0, 0.05, len(df_res))
@@ -102,15 +98,13 @@ if st.button("🚀 Prédire"):
 
     counts = df_res["Classification"].value_counts().reindex(color_map.keys(), fill_value=0)
     fig2, ax2 = plt.subplots()
-    ax2.pie(counts, labels=counts.index, autopct="%1.1f%%", startangle=90,
-            colors=[color_map[l] for l in counts.index])
+    ax2.pie(counts, labels=counts.index, autopct="%1.1f%%",
+            startangle=90, colors=[color_map[l] for l in counts.index])
     ax2.set_title("Répartition des classes")
     ax2.axis("equal")
 
     col1, col2 = st.columns([0.6, 0.4])
     with col1:
-        st.subheader("Scatterplot")
         st.pyplot(fig)
     with col2:
-        st.subheader("Pie Chart")
         st.pyplot(fig2)
