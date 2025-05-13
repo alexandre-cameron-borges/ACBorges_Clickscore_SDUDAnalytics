@@ -39,50 +39,46 @@ df = pd.read_csv(uploaded_file)
 if not {"image","texte"}.issubset(df.columns):
     st.error("Les colonnes requises sont : image, texte")
     st.stop()
-# Limiter à 10 lignes pour faciliter l'affichage
-df = df.head(10)
+df = df.head(10)  # Limiter à 10 lignes
 
-# 6) Batch prédiction
+# 6) Batch prédiction avec barre de progression
 if st.button("🚀 Prédire"):
     age_norm  = (age - MEDIAN_AGE) / (MAX_AGE - MEDIAN_AGE)
     gender_id = gender_map[genre]
-    results = []
+    total     = len(df)
+    progress_bar = st.progress(0, text=f"0 / {total}")
+    results   = []
 
-    for _, row in df.iterrows():
-        p_tm  = predict_tm(row["texte"], age_norm, gender_id)
-        p_ctr = predict_ctr(row["texte"])
-        label = {0:"❗ Nobait", 1:"Softbait", 2:"✅ Clickbait"}[p_tm]
-        results.append({
-            "Texte":          row["texte"],
-            "Classification": label,
-            "CTR prédit":     f"{p_ctr:.2f}%"
-        })
+    with st.spinner("🚀 Prédiction en cours…"):
+        for i, row in enumerate(df.itertuples(), start=1):
+            p_tm  = predict_tm(row.texte, age_norm, gender_id)
+            p_ctr = predict_ctr(row.texte)
+            label = {0:"❗ Nobait", 1:"Softbait", 2:"✅ Clickbait"}[p_tm]
+            results.append({
+                "Texte":          row.texte,
+                "Classification": label,
+                "CTR prédit":     f"{p_ctr:.2f}%"
+            })
+            progress_bar.progress(i/total, text=f"{i} / {total}")
 
-    # DataFrame et conversion CTR en float pour tri
+    progress_bar.empty()
+    st.success("✅ Prédiction terminée !")
+
+    # Post-traitement et affichage
     df_res = pd.DataFrame(results)
     df_res["CTR_num"] = df_res["CTR prédit"].str.rstrip("%").astype(float)
-    # Tri décroissant
     df_res = df_res.sort_values(by="CTR_num", ascending=False)
 
-    # Affichage du tableau trié
     st.subheader("🔽 Tableau trié par CTR prédit (décroissant)")
-    st.table(
-        df_res[["Texte","Classification","CTR prédit"]]
-    )
+    st.table(df_res[["Texte","Classification","CTR prédit"]])
 
-    # Visualisations
     color_map = {"❗ Nobait":"red","Softbait":"orange","✅ Clickbait":"green"}
     df_res["color"] = df_res["Classification"].map(color_map)
-
     class_encode = {"❗ Nobait":0, "Softbait":1, "✅ Clickbait":2}
     x = df_res["Classification"].map(class_encode) + np.random.normal(0, 0.05, len(df_res))
 
     fig, ax = plt.subplots()
-    ax.scatter(
-        x,
-        df_res["CTR_num"],
-        c=df_res["color"]
-    )
+    ax.scatter(x, df_res["CTR_num"], c=df_res["color"])
     ax.set_xticks([0,1,2])
     ax.set_xticklabels(["Nobait","Softbait","Clickbait"])
     ax.set_ylabel("CTR prédit (%)")
@@ -91,13 +87,8 @@ if st.button("🚀 Prédire"):
 
     counts = df_res["Classification"].value_counts().reindex(color_map.keys(), fill_value=0)
     fig2, ax2 = plt.subplots()
-    ax2.pie(
-        counts,
-        labels=counts.index,
-        autopct="%1.1f%%",
-        startangle=90,
-        colors=[color_map[l] for l in counts.index]
-    )
+    ax2.pie(counts, labels=counts.index, autopct="%1.1f%%", startangle=90,
+            colors=[color_map[l] for l in counts.index])
     ax2.set_title("Répartition des classes")
     ax2.axis("equal")
 
@@ -108,3 +99,4 @@ if st.button("🚀 Prédire"):
     with col2:
         st.subheader("Pie Chart")
         st.pyplot(fig2)
+
