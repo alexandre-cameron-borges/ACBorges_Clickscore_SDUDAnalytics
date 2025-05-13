@@ -16,14 +16,12 @@ from models.predict import predict_cb, predict_ctr
 # 2️⃣ UI Setup
 st.set_page_config(page_title="Alexandre's DUDA Clickscore v1", layout="centered")
 st.title("💡 Alexandre's DUDA Clickscore v1")
-st.markdown('''Le :rainbow[DUDA Clickscore] est le **MVP d'une Webapp streamlit de Clickscoring réalisée pour le DU Sorbonne Data Analytics 2025-2026 par Alexandre Cameron BORGES**. 
-Basé sur 2 modèles utilisant PyTorch, BERT, Huggingface avec un Fine-tuning multi-tâche (classification clickbait + régression linéaire CTR) sur plusieurs dataset (MIND, Webis, Kaggle..) 
+st.markdown('''Le :rainbow[DUDA Clickscore] est le **MVP d'une Webapp streamlit de Clickscoring réalisée pour le DU Sorbonne Data Analytics 2025-2026 par Alexandre Cameron BORGES**.  
+Basé sur 2 modèles utilisant PyTorch, BERT, Huggingface avec un Fine-tuning multi-tâche (classification clickbait + régression linéaire CTR) sur plusieurs dataset (MIND, Webis, Kaggle..)
 
-
-**Contexte:** Les investissements publicitaires en ligne sont de plus en plus omniprésents pour les petites et grandes entreprises, 
-cet outil vise à aider à la prise de décision des responsables marketing quant à quelles publicités privilégier afin d'économiser en budget A/B test. 
+**Contexte:** Les investissements publicitaires en ligne sont de plus en plus omniprésents pour les petites et grandes entreprises,  
+cet outil vise à aider à la prise de décision des responsables marketing quant à quelles publicités privilégier afin d'économiser en budget A/B test.  
 L'idée est également de récupérer une part de la connaissance de l'efficacité publicitaire, connaissance qui est cloisonnée par les plateformes publicitaires''')
-
 
 # 3️⃣ Constantes & mapping
 MEDIAN_AGE = 35.0
@@ -55,21 +53,30 @@ if st.button("🚀 Prédire"):
     total     = len(df)
     bar       = st.progress(0, text="Chargement…")
 
-    # ▪️ 1) Collecte des probabilités et CTR
+    # 1) Collecte des proba clickbait et CTR
     pcbs, textes, pctrs = [], [], []
     for i, row in enumerate(df.itertuples(), start=1):
-        p_cb = predict_cb(row.texte, age_norm, gender_id)
-        p_ctr = predict_ctr(row.texte)
+        texte = row.texte.strip()
+        p_cb_orig  = predict_cb(texte, age_norm, gender_id)
+        p_ctr_orig = predict_ctr(texte)
+
+        # Atténuation graduelle pour textes trop courts
+        if len(texte) < 7:
+            p_cb  = p_cb_orig * 0.2
+            p_ctr = p_ctr_orig * 0.3
+        else:
+            p_cb, p_ctr = p_cb_orig, p_ctr_orig
+
         pcbs.append(p_cb)
-        textes.append(row.texte)
+        textes.append(texte)
         pctrs.append(p_ctr)
         bar.progress(i/total, text=f"{i}/{total}")
     bar.empty()
 
-    # ▪️ 2) Seuils dynamiques (33ᵉ et 66ᵉ percentiles)
+    # 2) Seuils dynamiques
     Q1, Q2 = np.percentile(pcbs, [33, 66])
 
-    # ▪️ 3) Construction des résultats avec 3 classes garanties
+    # 3) Construction résultats
     results = []
     for texte, p_cb, p_ctr in zip(textes, pcbs, pctrs):
         if   p_cb < Q1:
@@ -100,8 +107,8 @@ if st.button("🚀 Prédire"):
     encode    = {"🔴 Nobait":0,"🟠 Softbait":1,"🟢 Clickbait":2}
     x = df_res["Classification"].map(encode) + np.random.normal(0,0.05,len(df_res))
 
-    fig, ax = plt.subplots()
-    ax.scatter(x, df_res["CTR_num"], c=df_res["Classification"].map(color_map), s=300)
+    fig, ax = plt.subplots(figsize=(5,4))
+    ax.scatter(x, df_res["CTR_num"], c=df_res["Classification"].map(color_map), s=300, alpha=0.7, edgecolors="w")
     ax.set_xticks([0,1,2])
     ax.set_xticklabels(["Nobait","Softbait","Clickbait"])
     ax.set_ylabel("CTR prédit (%)")
@@ -109,12 +116,12 @@ if st.button("🚀 Prédire"):
     plt.tight_layout()
 
     counts = df_res["Classification"].value_counts().reindex(color_map.keys(), fill_value=0)
-    fig2, ax2 = plt.subplots()
+    fig2, ax2 = plt.subplots(figsize=(5,4))
     ax2.pie(counts, labels=counts.index, autopct="%1.1f%%", startangle=90,
             colors=[color_map[l] for l in counts.index])
     ax2.set_title("Répartition des classes")
     ax2.axis("equal")
 
     c1, c2 = st.columns([0.5, 0.5])
-    with c1: st.pyplot(fig)
-    with c2: st.pyplot(fig2)
+    with c1: st.pyplot(fig, use_container_width=True)
+    with c2: st.pyplot(fig2, use_container_width=True)
