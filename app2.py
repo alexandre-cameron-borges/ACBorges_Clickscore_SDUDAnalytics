@@ -14,9 +14,13 @@ os.environ["HUGGINGFACE_TOKEN"] = st.secrets["HUGGINGFACE_TOKEN"]
 from models.predict import predict_cb, predict_ctr
 
 # 2️⃣ UI Setup
-st.set_page_config(page_title="Clickbait & CTR Predictor", layout="centered")
-st.title("💡 Détecteur de Clickbait & CTR Prédictif")
-st.description("DU")
+st.set_page_config(page_title="Alexandre's DUDA Clickscore v1", layout="centered")
+st.title("💡 Alexandre's DUDA Clickscore v1")
+st.markdown("Le :rainbow[DUDA Clickscore] est le **MVP d'une Webapp de Clickscoring réalisée pour le DU Sorbonne Data Analytics 2025-2026 par Alexandre Cameron BORGES**. 
+Contexte: Les investissements publicitaires en ligne sont de plus en plus omniprésents pour les petites et grandes entreprises, 
+cet outil vise à aider à la prise de décision des responsables marketing quant à quelles publicités privilégier afin d'économiser en budget A/B test. 
+L'idée est également de récupérer une part de la connaissance de l'efficacité publicitaire, connaissance qui est cloisonnée par les plateformes publicitaires")
+
 
 # 3️⃣ Constantes & mapping
 MEDIAN_AGE = 35.0
