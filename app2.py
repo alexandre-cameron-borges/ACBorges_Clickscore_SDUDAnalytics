@@ -11,7 +11,7 @@ if "HUGGINGFACE_TOKEN" not in st.secrets:
 os.environ["HUGGINGFACE_TOKEN"] = st.secrets["HUGGINGFACE_TOKEN"]
 
 # 1️⃣ Imports prédiction
-from models.predict import predict_cb, predict_tm, predict_ctr
+from models.predict import predict_cb, predict_ctr
 
 # 2️⃣ UI Setup
 st.set_page_config(page_title="Clickbait & CTR Predictor", layout="centered")
@@ -40,40 +40,37 @@ if not {"image","texte"}.issubset(df.columns):
     st.stop()
 df = df.head(10)
 
-# 6️⃣ Prédiction + barre + animation plein-écran
+# 6️⃣ Prédiction + barre + animation
 if st.button("🚀 Prédire"):
-    age_norm     = (age - MEDIAN_AGE) / (MAX_AGE - MEDIAN_AGE)
-    gender_id    = gender_map[genre]
-    total        = len(df)
-    progress_bar = st.progress(0, text=f"0/{total}")
-    results      = []
+    age_norm  = (age - MEDIAN_AGE) / (MAX_AGE - MEDIAN_AGE)
+    gender_id = gender_map[genre]
+    total     = len(df)
+    bar       = st.progress(0, text=f"0/{total}")
+    results   = []
 
     with st.spinner("🚀 Prédiction en cours…"):
         for i, row in enumerate(df.itertuples(), start=1):
-            p_tm  = predict_tm(row.texte, age_norm, gender_id)
-            p_ctr = predict_ctr(row.texte)
-            p_cb  = predict_cb(row.texte, age_norm, gender_id)  # nouvelle ligne
-                # Attribution de l'étiquette selon predict_cb et predict_tm
-            if p_cb >= 0.7:
-                label = "✅ Clickbait"
-            elif p_tm == 1:
+            p_cb = predict_cb(row.texte, age_norm, gender_id)  # proba clickbait 0–1
+            # Classification 3 labels sur p_cb seul
+            if   p_cb < 0.5:
+                label = "❗ Nobait"
+            elif p_cb < 0.8:
                 label = "Softbait"
             else:
-                label = "❗ Nobait"
+                label = "✅ Clickbait"
+            p_ctr = predict_ctr(row.texte)
             results.append({
                 "Texte":          row.texte,
                 "Classification": label,
                 "CTR prédit":     f"{p_ctr:.2f}%"
             })
-            progress_bar.progress(i/total, text=f"{i}/{total}")
+            bar.progress(i/total, text=f"{i}/{total}")
 
-    progress_bar.empty()
+    bar.empty()
     st.success("✅ Prédiction terminée !")
+    st.balloons()
 
-    # 🎈 Animation plein-écran
-    st.balloons()  # célèbre la fin de la prédiction :contentReference[oaicite:0]{index=0}
-
-    # 7️⃣ Post-traitement & affichage
+    # 7️⃣ Affichage
     df_res = pd.DataFrame(results)
     df_res["CTR_num"] = df_res["CTR prédit"].str.rstrip("%").astype(float)
     df_res = df_res.sort_values("CTR_num", ascending=False)
@@ -81,13 +78,13 @@ if st.button("🚀 Prédire"):
     st.subheader("🔽 Tableau trié par CTR prédit")
     st.table(df_res[["Texte","Classification","CTR prédit"]])
 
-    color_map  = {"❗ Nobait":"red","Softbait":"orange","✅ Clickbait":"green"}
-    df_res["color"] = df_res["Classification"].map(color_map)
-    class_encode = {"❗ Nobait":0, "Softbait":1, "✅ Clickbait":2}
-    x = df_res["Classification"].map(class_encode) + np.random.normal(0, 0.05, len(df_res))
+    # Graphiques
+    color_map = {"❗ Nobait":"red","Softbait":"orange","✅ Clickbait":"green"}
+    encode    = {"❗ Nobait":0,"Softbait":1,"✅ Clickbait":2}
+    x = df_res["Classification"].map(encode) + np.random.normal(0,0.05,len(df_res))
 
     fig, ax = plt.subplots()
-    ax.scatter(x, df_res["CTR_num"], c=df_res["color"])
+    ax.scatter(x, df_res["CTR_num"], c=df_res["Classification"].map(color_map))
     ax.set_xticks([0,1,2])
     ax.set_xticklabels(["Nobait","Softbait","Clickbait"])
     ax.set_ylabel("CTR prédit (%)")
@@ -96,19 +93,12 @@ if st.button("🚀 Prédire"):
 
     counts = df_res["Classification"].value_counts().reindex(color_map.keys(), fill_value=0)
     fig2, ax2 = plt.subplots()
-    ax2.pie(
-        counts,
-        labels=counts.index,
-        autopct="%1.1f%%",
-        startangle=90,
-        colors=[color_map[l] for l in counts.index]
-    )
+    ax2.pie(counts, labels=counts.index, autopct="%1.1f%%", startangle=90,
+            colors=[color_map[l] for l in counts.index])
     ax2.set_title("Répartition des classes")
     ax2.axis("equal")
 
-    col1, col2 = st.columns([0.6, 0.4])
-    with col1:
-        st.pyplot(fig)
-    with col2:
-        st.pyplot(fig2)
+    c1, c2 = st.columns([0.6, 0.4])
+    with c1: st.pyplot(fig)
+    with c2: st.pyplot(fig2)
 
