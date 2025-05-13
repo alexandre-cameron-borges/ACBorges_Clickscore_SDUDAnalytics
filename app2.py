@@ -88,7 +88,7 @@ if st.button("🚀 Prédire"):
         results.append({
             "Texte":          texte,
             "Classification": label,
-            "CTR prédit":     f"{p_ctr:.2f}%"
+            "CTR prédit":    f"{(p_ctr*0.1):.2f}%"
         })
 
     st.success("✅ Prédiction terminée !")
