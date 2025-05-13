@@ -40,33 +40,42 @@ if not {"image","texte"}.issubset(df.columns):
     st.stop()
 df = df.head(10)
 
-# 6️⃣ Prédiction + barre + animation
+# 6️⃣ Prédiction + barre
 if st.button("🚀 Prédire"):
     age_norm  = (age - MEDIAN_AGE) / (MAX_AGE - MEDIAN_AGE)
     gender_id = gender_map[genre]
     total     = len(df)
-    bar       = st.progress(0, text=f"0/{total}")
-    results   = []
+    bar       = st.progress(0, text="Chargement…")
 
-    with st.spinner("🚀 Prédiction en cours…"):
-        for i, row in enumerate(df.itertuples(), start=1):
-            p_cb = predict_cb(row.texte, age_norm, gender_id)  # proba clickbait 0–1
-            # Classification 3 labels sur p_cb seul
-            if   p_cb < 0.5:
-                label = "❗ Nobait"
-            elif p_cb < 0.8:
-                label = "Softbait"
-            else:
-                label = "✅ Clickbait"
-            p_ctr = predict_ctr(row.texte)
-            results.append({
-                "Texte":          row.texte,
-                "Classification": label,
-                "CTR prédit":     f"{p_ctr:.2f}%"
-            })
-            bar.progress(i/total, text=f"{i}/{total}")
-
+    # ▪️ 1) Collecte des probabilités et CTR
+    pcbs, textes, pctrs = [], [], []
+    for i, row in enumerate(df.itertuples(), start=1):
+        p_cb = predict_cb(row.texte, age_norm, gender_id)
+        p_ctr = predict_ctr(row.texte)
+        pcbs.append(p_cb)
+        textes.append(row.texte)
+        pctrs.append(p_ctr)
+        bar.progress(i/total, text=f"{i}/{total}")
     bar.empty()
+
+    # ▪️ 2) Seuils dynamiques (33ᵉ et 66ᵉ percentiles)
+    Q1, Q2 = np.percentile(pcbs, [33, 66])
+
+    # ▪️ 3) Construction des résultats avec 3 classes garanties
+    results = []
+    for texte, p_cb, p_ctr in zip(textes, pcbs, pctrs):
+        if   p_cb < Q1:
+            label = "❗ Nobait"
+        elif p_cb < Q2:
+            label = "Softbait"
+        else:
+            label = "✅ Clickbait"
+        results.append({
+            "Texte":          texte,
+            "Classification": label,
+            "CTR prédit":     f"{p_ctr:.2f}%"
+        })
+
     st.success("✅ Prédiction terminée !")
     st.balloons()
 
@@ -101,4 +110,3 @@ if st.button("🚀 Prédire"):
     c1, c2 = st.columns([0.6, 0.4])
     with c1: st.pyplot(fig)
     with c2: st.pyplot(fig2)
-
