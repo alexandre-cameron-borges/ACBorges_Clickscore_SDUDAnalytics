@@ -3,6 +3,7 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+from streamlit.components.v1 import html  # ← Ajout pour confetti
 
 # 0) Token HF
 if "HUGGINGFACE_TOKEN" not in st.secrets:
@@ -22,26 +23,25 @@ MEDIAN_AGE = 35.0
 MAX_AGE    = 80.0
 gender_map = {"Male":0, "Female":1, "Unknown":2}
 
-# 4) Sélecteurs globaux côte-à-côte
+# 4) Sélecteurs
 col_age, col_genre = st.columns([0.6, 0.4])
 with col_age:
     age = st.slider("🎯 Âge cible", 18, 99, 30)
 with col_genre:
     genre = st.selectbox("👤 Genre cible", list(gender_map.keys()))
 
-# 5) CSV uploader
+# 5) Upload CSV
 uploaded_file = st.file_uploader("📂 Importez votre CSV (colonnes: image, texte)", type="csv")
 if not uploaded_file:
     st.info("Veuillez importer un fichier CSV.")
     st.stop()
-
 df = pd.read_csv(uploaded_file)
 if not {"image","texte"}.issubset(df.columns):
     st.error("Les colonnes requises sont : image, texte")
     st.stop()
-df = df.head(10)  # Limiter à 10 lignes
+df = df.head(10)
 
-# 6) Batch prédiction avec barre de progression
+# 6) Batch prédiction
 if st.button("🚀 Prédire"):
     age_norm  = (age - MEDIAN_AGE) / (MAX_AGE - MEDIAN_AGE)
     gender_id = gender_map[genre]
@@ -64,6 +64,21 @@ if st.button("🚀 Prédire"):
     progress_bar.empty()
     st.success("✅ Prédiction terminée !")
 
+    # 🎉 Confetti via Canvas-Confetti CDN
+    html(
+        """
+        <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.8.0/dist/confetti.browser.min.js"></script>
+        <script>
+          confetti({
+            particleCount: 200,
+            spread: 60,
+            origin: { y: 0.6 }
+          });
+        </script>
+        """,
+        height=0,
+    )
+
     # Post-traitement et affichage
     df_res = pd.DataFrame(results)
     df_res["CTR_num"] = df_res["CTR prédit"].str.rstrip("%").astype(float)
@@ -72,9 +87,9 @@ if st.button("🚀 Prédire"):
     st.subheader("🔽 Tableau trié par CTR prédit (décroissant)")
     st.table(df_res[["Texte","Classification","CTR prédit"]])
 
-    color_map = {"❗ Nobait":"red","Softbait":"orange","✅ Clickbait":"green"}
+    color_map    = {"❗ Nobait":"red","Softbait":"orange","✅ Clickbait":"green"}
     df_res["color"] = df_res["Classification"].map(color_map)
-    class_encode = {"❗ Nobait":0, "Softbait":1, "✅ Clickbait":2}
+    class_encode   = {"❗ Nobait":0, "Softbait":1, "✅ Clickbait":2}
     x = df_res["Classification"].map(class_encode) + np.random.normal(0, 0.05, len(df_res))
 
     fig, ax = plt.subplots()
@@ -99,4 +114,3 @@ if st.button("🚀 Prédire"):
     with col2:
         st.subheader("Pie Chart")
         st.pyplot(fig2)
-
