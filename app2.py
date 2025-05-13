@@ -93,7 +93,7 @@ if st.button("🚀 Prédire"):
     x = df_res["Classification"].map(encode) + np.random.normal(0,0.05,len(df_res))
 
     fig, ax = plt.subplots()
-    ax.scatter(x, df_res["CTR_num"], c=df_res["Classification"].map(color_map))
+    ax.scatter(x, df_res["CTR_num"], c=df_res["Classification"].map(color_map), s=100)
     ax.set_xticks([0,1,2])
     ax.set_xticklabels(["Nobait","Softbait","Clickbait"])
     ax.set_ylabel("CTR prédit (%)")
