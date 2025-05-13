@@ -3,7 +3,7 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-from streamlit.components.v1 import html  # ← Ajout pour confetti
+import streamlit.components.v1 as components  # ← pour html JS
 
 # 0) Token HF
 if "HUGGINGFACE_TOKEN" not in st.secrets:
@@ -11,7 +11,7 @@ if "HUGGINGFACE_TOKEN" not in st.secrets:
     st.stop()
 os.environ["HUGGINGFACE_TOKEN"] = st.secrets["HUGGINGFACE_TOKEN"]
 
-# 1) Imports
+# 1) Imports prédiction
 from models.predict import predict_cb, predict_tm, predict_ctr
 
 # 2) UI Setup
@@ -26,7 +26,7 @@ gender_map = {"Male":0, "Female":1, "Unknown":2}
 # 4) Sélecteurs
 col_age, col_genre = st.columns([0.6, 0.4])
 with col_age:
-    age = st.slider("🎯 Âge cible", 18, 99, 30)
+    age   = st.slider("🎯 Âge cible", 18, 99, 30)
 with col_genre:
     genre = st.selectbox("👤 Genre cible", list(gender_map.keys()))
 
@@ -41,13 +41,13 @@ if not {"image","texte"}.issubset(df.columns):
     st.stop()
 df = df.head(10)
 
-# 6) Batch prédiction
+# 6) Batch prédiction + confetti
 if st.button("🚀 Prédire"):
-    age_norm  = (age - MEDIAN_AGE) / (MAX_AGE - MEDIAN_AGE)
-    gender_id = gender_map[genre]
-    total     = len(df)
+    age_norm     = (age - MEDIAN_AGE) / (MAX_AGE - MEDIAN_AGE)
+    gender_id    = gender_map[genre]
+    total        = len(df)
     progress_bar = st.progress(0, text=f"0 / {total}")
-    results   = []
+    results      = []
 
     with st.spinner("🚀 Prédiction en cours…"):
         for i, row in enumerate(df.itertuples(), start=1):
@@ -64,20 +64,20 @@ if st.button("🚀 Prédire"):
     progress_bar.empty()
     st.success("✅ Prédiction terminée !")
 
-    # 🎉 Confetti via Canvas-Confetti CDN
-    html(
-        """
-        <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.8.0/dist/confetti.browser.min.js"></script>
-        <script>
-          confetti({
-            particleCount: 200,
-            spread: 60,
-            origin: { y: 0.6 }
-          });
-        </script>
-        """,
-        height=0,
-    )
+    # 🎉 Confetti – hauteur minimale de 200px, fallback inline si pas de CDN
+    js = """
+    (function(){
+      var script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.8.0/dist/confetti.browser.min.js';
+      script.onload = function(){
+        setTimeout(function(){
+          confetti({ particleCount: 200, spread: 60, origin: { y: 0.6 } });
+        }, 0);
+      };
+      document.body.appendChild(script);
+    })();
+    """
+    components.html(js, height=200)  # hauteur ≥150px par défaut :contentReference[oaicite:0]{index=0} :contentReference[oaicite:1]{index=1}
 
     # Post-traitement et affichage
     df_res = pd.DataFrame(results)
@@ -87,7 +87,7 @@ if st.button("🚀 Prédire"):
     st.subheader("🔽 Tableau trié par CTR prédit (décroissant)")
     st.table(df_res[["Texte","Classification","CTR prédit"]])
 
-    color_map    = {"❗ Nobait":"red","Softbait":"orange","✅ Clickbait":"green"}
+    color_map  = {"❗ Nobait":"red","Softbait":"orange","✅ Clickbait":"green"}
     df_res["color"] = df_res["Classification"].map(color_map)
     class_encode   = {"❗ Nobait":0, "Softbait":1, "✅ Clickbait":2}
     x = df_res["Classification"].map(class_encode) + np.random.normal(0, 0.05, len(df_res))
