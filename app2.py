@@ -73,11 +73,11 @@ if st.button("🚀 Prédire"):
     results = []
     for texte, p_cb, p_ctr in zip(textes, pcbs, pctrs):
         if   p_cb < Q1:
-            label = "🔴🥉 Nobait"
+            label = "🔴 Nobait"
         elif p_cb < Q2:
-            label = "🟠🥈 Softbait"
+            label = "🟠 Softbait"
         else:
-            label = "🟢🥇 Clickbait"
+            label = "🟢 Clickbait"
         results.append({
             "Texte":          texte,
             "Classification": label,
@@ -96,8 +96,8 @@ if st.button("🚀 Prédire"):
     st.table(df_res[["Texte","Classification","CTR prédit"]])
 
     # Graphiques
-    color_map = {"🔴🥉 Nobait":"red","🟠🥈 Softbait":"orange","🟢🥇 Clickbait":"green"}
-    encode    = {"🔴🥉 Nobait":0,"🟠🥈 Softbait":1,"🟢🥇 Clickbait":2}
+    color_map = {"🔴 Nobait":"red","🟠 Softbait":"orange","🟢 Clickbait":"green"}
+    encode    = {"🔴 Nobait":0,"🟠 Softbait":1,"🟢 Clickbait":2}
     x = df_res["Classification"].map(encode) + np.random.normal(0,0.05,len(df_res))
 
     fig, ax = plt.subplots()
@@ -115,6 +115,6 @@ if st.button("🚀 Prédire"):
     ax2.set_title("Répartition des classes")
     ax2.axis("equal")
 
-    c1, c2 = st.columns([0.6, 0.4])
+    c1, c2 = st.columns([0.5, 0.5])
     with c1: st.pyplot(fig)
     with c2: st.pyplot(fig2)
