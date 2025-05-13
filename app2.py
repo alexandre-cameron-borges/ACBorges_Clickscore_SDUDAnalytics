@@ -109,6 +109,17 @@ if st.button("🚀 Prédire"):
 
     fig, ax = plt.subplots(figsize=(5,4))
     ax.scatter(x, df_res["CTR_num"], c=df_res["Classification"].map(color_map), s=300, alpha=0.7, edgecolors="w")
+    # ... après ax.scatter(...)
+# 1) Récupérer min et max
+        y_min, y_max = df_res["CTR_num"].min(), df_res["CTR_num"].max()
+# 2) Calculer une marge (10% de la plage)
+        margin = (y_max - y_min) * 0.1
+# 3) Appliquer les limites “serrées”
+        ax.set_ylim(y_min - margin, y_max + margin)
+
+# Option rapide alternative :
+# ax.margins(y=0.1)  # 10% d’espace en haut et en bas
+
     ax.set_xticks([0,1,2])
     ax.set_xticklabels(["Nobait","Softbait","Clickbait"])
     ax.set_ylabel("CTR prédit (%)")
