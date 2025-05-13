@@ -3,7 +3,6 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-import streamlit.components.v1 as components  # pour HTML/JS
 
 # 0️⃣ Token HF
 if "HUGGINGFACE_TOKEN" not in st.secrets:
@@ -41,7 +40,7 @@ if not {"image","texte"}.issubset(df.columns):
     st.stop()
 df = df.head(10)
 
-# 6️⃣ Prédiction + barre + confetti
+# 6️⃣ Prédiction + barre + animation plein-écran
 if st.button("🚀 Prédire"):
     age_norm     = (age - MEDIAN_AGE) / (MAX_AGE - MEDIAN_AGE)
     gender_id    = gender_map[genre]
@@ -64,16 +63,8 @@ if st.button("🚀 Prédire"):
     progress_bar.empty()
     st.success("✅ Prédiction terminée !")
 
-    # 🎉 Confetti via components.html (hauteur ≥150px)
-    js = """
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.8.0/dist/confetti.browser.min.js"></script>
-    <script>
-      document.addEventListener('DOMContentLoaded', function(){
-        confetti({ particleCount: 200, spread: 60, origin: { y: 0.6 } });
-      });
-    </script>
-    """
-    components.html(js, height=200)
+    # 🎈 Animation plein-écran
+    st.balloons()  # célèbre la fin de la prédiction :contentReference[oaicite:0]{index=0}
 
     # 7️⃣ Post-traitement & affichage
     df_res = pd.DataFrame(results)
@@ -83,9 +74,9 @@ if st.button("🚀 Prédire"):
     st.subheader("🔽 Tableau trié par CTR prédit")
     st.table(df_res[["Texte","Classification","CTR prédit"]])
 
-    color_map    = {"❗ Nobait":"red","Softbait":"orange","✅ Clickbait":"green"}
+    color_map  = {"❗ Nobait":"red","Softbait":"orange","✅ Clickbait":"green"}
     df_res["color"] = df_res["Classification"].map(color_map)
-    class_encode   = {"❗ Nobait":0, "Softbait":1, "✅ Clickbait":2}
+    class_encode = {"❗ Nobait":0, "Softbait":1, "✅ Clickbait":2}
     x = df_res["Classification"].map(class_encode) + np.random.normal(0, 0.05, len(df_res))
 
     fig, ax = plt.subplots()
@@ -98,8 +89,13 @@ if st.button("🚀 Prédire"):
 
     counts = df_res["Classification"].value_counts().reindex(color_map.keys(), fill_value=0)
     fig2, ax2 = plt.subplots()
-    ax2.pie(counts, labels=counts.index, autopct="%1.1f%%",
-            startangle=90, colors=[color_map[l] for l in counts.index])
+    ax2.pie(
+        counts,
+        labels=counts.index,
+        autopct="%1.1f%%",
+        startangle=90,
+        colors=[color_map[l] for l in counts.index]
+    )
     ax2.set_title("Répartition des classes")
     ax2.axis("equal")
 
@@ -108,3 +104,4 @@ if st.button("🚀 Prédire"):
         st.pyplot(fig)
     with col2:
         st.pyplot(fig2)
+
