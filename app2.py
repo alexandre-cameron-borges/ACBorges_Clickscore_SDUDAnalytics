@@ -52,7 +52,14 @@ if st.button("🚀 Prédire"):
         for i, row in enumerate(df.itertuples(), start=1):
             p_tm  = predict_tm(row.texte, age_norm, gender_id)
             p_ctr = predict_ctr(row.texte)
-            label = {0:"❗ Nobait", 1:"Softbait", 2:"✅ Clickbait"}[p_tm]
+            p_cb  = predict_cb(row.texte, age_norm, gender_id)  # nouvelle ligne
+                # Attribution de l'étiquette selon predict_cb et predict_tm
+            if p_cb >= 0.7:
+                label = "✅ Clickbait"
+            elif p_tm == 1:
+                label = "Softbait"
+            else:
+                label = "❗ Nobait"
             results.append({
                 "Texte":          row.texte,
                 "Classification": label,
