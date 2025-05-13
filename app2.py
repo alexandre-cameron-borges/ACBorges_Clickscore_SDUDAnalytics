@@ -16,6 +16,7 @@ from models.predict import predict_cb, predict_ctr
 # 2️⃣ UI Setup
 st.set_page_config(page_title="Clickbait & CTR Predictor", layout="centered")
 st.title("💡 Détecteur de Clickbait & CTR Prédictif")
+st.description("DU")
 
 # 3️⃣ Constantes & mapping
 MEDIAN_AGE = 35.0
@@ -65,11 +66,11 @@ if st.button("🚀 Prédire"):
     results = []
     for texte, p_cb, p_ctr in zip(textes, pcbs, pctrs):
         if   p_cb < Q1:
-            label = "❗ Nobait"
+            label = "🔴🥉 Nobait"
         elif p_cb < Q2:
-            label = "Softbait"
+            label = "🟠🥈 Softbait"
         else:
-            label = "✅ Clickbait"
+            label = "🟢🥇 Clickbait"
         results.append({
             "Texte":          texte,
             "Classification": label,
@@ -88,12 +89,12 @@ if st.button("🚀 Prédire"):
     st.table(df_res[["Texte","Classification","CTR prédit"]])
 
     # Graphiques
-    color_map = {"❗ Nobait":"red","Softbait":"orange","✅ Clickbait":"green"}
-    encode    = {"❗ Nobait":0,"Softbait":1,"✅ Clickbait":2}
+    color_map = {"🔴🥉 Nobait":"red","🟠🥈 Softbait":"orange","🟢🥇 Clickbait":"green"}
+    encode    = {"🔴🥉 Nobait":0,"🟠🥈 Softbait":1,"🟢🥇 Clickbait":2}
     x = df_res["Classification"].map(encode) + np.random.normal(0,0.05,len(df_res))
 
     fig, ax = plt.subplots()
-    ax.scatter(x, df_res["CTR_num"], c=df_res["Classification"].map(color_map), s=100)
+    ax.scatter(x, df_res["CTR_num"], c=df_res["Classification"].map(color_map), s=300)
     ax.set_xticks([0,1,2])
     ax.set_xticklabels(["Nobait","Softbait","Clickbait"])
     ax.set_ylabel("CTR prédit (%)")
