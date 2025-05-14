@@ -110,6 +110,7 @@ if st.button("🚀 Prédire"):
     fig, ax = plt.subplots(figsize=(5,4))
     ax.scatter(x, df_res["CTR_num"], c=df_res["Classification"].map(color_map), s=300, alpha=0.7, edgecolors="w")
     ax.set_yscale("log")
+    ax.ticklabel_format(style="plain", axis="y")
 
     # ... après ax.scatter(...)
 # 1) Récupérer min et max
