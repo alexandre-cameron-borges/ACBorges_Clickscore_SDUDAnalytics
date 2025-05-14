@@ -110,7 +110,6 @@ if st.button("🚀 Prédire"):
     fig, ax = plt.subplots(figsize=(5,4))
     ax.scatter(x, df_res["CTR_num"], c=df_res["Classification"].map(color_map), s=300, alpha=0.7, edgecolors="w")
     ax.set_yscale("log")
-    ax.ticklabel_format(style="plain", axis="y")
 
     # ... après ax.scatter(...)
 # 1) Récupérer min et max
@@ -123,6 +122,9 @@ if st.button("🚀 Prédire"):
 # Option rapide alternative :
 # ax.margins(y=0.1)  # 10% d’espace en haut et en bas
 
+    # Afficher les vrais CTR plutôt que 2×10¹, 3×10¹…
+    ax.ticklabel_format(style="plain", axis="y")
+    ax.yaxis.set_major_formatter(ScalarFormatter(useOffset=False))
     ax.set_xticks([0,1,2])
     ax.set_xticklabels(["Nobait","Softbait","Clickbait"])
     ax.set_ylabel("CTR prédit (%)")
