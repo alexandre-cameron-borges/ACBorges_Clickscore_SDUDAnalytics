@@ -3,10 +3,6 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-import matplotlib.ticker as mticker
-from matplotlib.ticker import ScalarFormatter
-
-
 
 # 0️⃣ Token HF
 if "HUGGINGFACE_TOKEN" not in st.secrets:
@@ -125,15 +121,6 @@ if st.button("🚀 Prédire"):
 
 # Option rapide alternative :
 # ax.margins(y=0.1)  # 10% d’espace en haut et en bas
-
-    ax.ticklabel_format(style="plain", axis="y")
-    ax.yaxis.set_major_formatter(ScalarFormatter(useOffset=False))
- # 1) Créer et configurer le formateur
-    fmt = mticker.ScalarFormatter(useMathText=False)
-    fmt.set_scientific(False)      # désactive la notation scientifique
-    fmt.set_useOffset(False)       # désactive tout offset bizarre
- # 2) L’appliquer à l’axe Y
-    ax.yaxis.set_major_formatter(fmt)
 
     ax.set_xticks([0,1,2])
     ax.set_xticklabels(["Nobait","Softbait","Clickbait"])
