@@ -3,8 +3,9 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.ticker as mticker
 from matplotlib.ticker import ScalarFormatter
-+ import matplotlib.ticker as mticker
+
 
 
 # 0️⃣ Token HF
