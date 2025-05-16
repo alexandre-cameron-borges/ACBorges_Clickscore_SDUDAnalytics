@@ -17,10 +17,9 @@ from models.predict import predict_cb, predict_ctr
 st.set_page_config(page_title="Alexandre's DUDA Clickscore v1", layout="centered")
 st.title("💡 Alexandre's DUDA Clickscore v1")
 st.markdown('''Le :rainbow[DUDA Clickscore] est le **MVP d'une Webapp streamlit de Clickscoring réalisée pour le DU Sorbonne Data Analytics 2025-2026 par Alexandre Cameron BORGES**.  
-Basé sur 2 modèles utilisant PyTorch, BERT, Huggingface avec un Fine-tuning multi-tâche (classification clickbait + régression linéaire CTR) sur plusieurs dataset (MIND, Webis, Kaggle..)
+Basé sur 2 modèles utilisant PyTorch, BERT, Huggingface avec un Fine-tuning multi-tâche (classification clickbait + régression linéaire CTR) sur plusieurs dataset d'interactions à du contenu en ligne (MIND, Webis, Kaggle..)
 
-**Contexte:** Les investissements publicitaires en ligne sont de plus en plus omniprésents pour les petites et grandes entreprises,  
-cet outil vise à aider à la prise de décision des responsables marketing quant à quelles publicités privilégier afin d'économiser en budget A/B test.  
+**Contexte:** Les investissements publicitaires en ligne sont de plus en plus omniprésents pour les petites et grandes entreprises, cet outil vise à aider à la prise de décision des responsables marketing quant à quelles publicités privilégier afin d'économiser en budget A/B test.  
 L'idée est également de récupérer une part de la connaissance de l'efficacité publicitaire, connaissance qui est cloisonnée par les plateformes publicitaires''')
 
 # 3️⃣ Constantes & mapping
