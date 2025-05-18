@@ -111,8 +111,7 @@ $ streamlit run app.py
 
 ## 🙋 Auteur
 
-| ---------------------------------------------------------------------------------------------- |
-| **Alexandre Cameron BORGES** ─ [LinkedIn](https://fr.linkedin.com/in/alexandre-cameron-borges) |
+ **Alexandre Cameron BORGES** ─ [LinkedIn](https://fr.linkedin.com/in/alexandre-cameron-borges) 
 
 > *“In God We Trust, All the Others We Want Data”*
 
