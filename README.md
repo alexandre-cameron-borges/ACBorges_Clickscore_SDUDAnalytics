@@ -1,7 +1,7 @@
 # DUDA Clickscore v1
 
 > Le DUDA Clickscore est le MVP d'une Webapp streamlit de Clickscoring réalisée pour le DU Sorbonne Data Analytics 2025-2026 par Alexandre Cameron BORGES.
-Basé sur 2 modèles utilisant PyTorch, BERT, Huggingface avec un Fine-tuning multi-tâche (classification clickbait + régression linéaire CTR) sur plusieurs dataset d'interactions en ligne (MIND, Webis, Kaggle..)
+Basé sur 2 modèles utilisant PyTorch, BERT, Huggingface avec un Fine-tuning multi-tâche (classification clickbaitness + régression linéaire CTR) sur plusieurs dataset d'interactions en ligne (MIND, Webis, Kaggle..)
 
 Contexte: Les investissements publicitaires en ligne sont de plus en plus omniprésents pour les petites et grandes entreprises, cet outil vise à aider à la prise de décision des responsables marketing quant à quelles publicités privilégier afin d'économiser en budget A/B test.
 L'idée est également de récupérer une part de la connaissance de l'efficacité publicitaire, connaissance qui est cloisonnée par les plateformes publicitaires comme Google ou Meta
@@ -51,10 +51,12 @@ Les jeux Kaggle & WEBIS ont été nettoyés, normalisés (colonnes: texte, age, 
 
 ## 🧠 Modèles
 
+Base: BERT est un modèle de langage lancé fin 2018 : il repose sur un bloc Transformer qui “regarde” chaque phrase simultanément vers la gauche et vers la droite ; durant son pré-apprentissage, il apprend la grammaire et le sens en devinant des mots cachés et en testant si deux phrases se suivent ; une fois ce socle acquis, on ne remplace que la petite couche finale pour adapter BERT à presque n’importe quelle tâche (analyse de sentiments, FAQ, prédiction de clics…)
+
 | Tâche           | Architecture                                                         | Dataset d’entraînement     | Métriques (val set)      |
 | --------------- | -------------------------------------------------------------------- | -------------------------- | ------------------------ |
-| **Clickbait ±** | BERT + features (âge, genre) <br> multi‑task `CB_F1 + truthMean Acc` | Fusion Kaggle & Webis      | F1 ≈ 0 .90 / Acc ≈ 0 .71 |
-| **CTR %**       | BERT regression <br> (sigmoïde 0‑1)                                  | Top 100 MIND (≥ 100 impr.) | RMSE ≈ 0 .018            |
+| **Clickbait ±** | BERT + features (âge, genre) <br> multi‑task `CB_F1 + truthMean Acc` | Fusion Kaggle & Webis      | F1 ≈ 0 .90 (sur 1 ; cela mesure à la fois les bons “oui” et les bons “non”) / Acc ≈ 0 .71 (71 % des titres bien classés)|
+| **CTR %**       | BERT regression <br> (sigmoïde 0‑1: pour qu’il reste dans 0-100 %)                                 | Top 100 MIND (≥ 100 impr.) | RMSE ≈ 0 .018 (en moyenne le modèle se trompe de 1,8 points sur 100 dans le pourcentage cliqué)           |
 
 Les poids entraînés (< 5 epoch) sont stockés sur mon compte privé **Hugging Face** et chargés *à la volée* via l’API. Le dépôt Hugging Face: https://huggingface.co/alexandre-cameron-borges
 
