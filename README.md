@@ -4,7 +4,7 @@
 Basé sur 2 modèles utilisant PyTorch, BERT, Huggingface avec un Fine-tuning multi-tâche (classification clickbait + régression linéaire CTR) sur plusieurs dataset d'interactions en ligne (MIND, Webis, Kaggle..)
 
 Contexte: Les investissements publicitaires en ligne sont de plus en plus omniprésents pour les petites et grandes entreprises, cet outil vise à aider à la prise de décision des responsables marketing quant à quelles publicités privilégier afin d'économiser en budget A/B test.
-L'idée est également de récupérer une part de la connaissance de l'efficacité publicitaire, connaissance qui est cloisonnée par les plateformes publicitaires
+L'idée est également de récupérer une part de la connaissance de l'efficacité publicitaire, connaissance qui est cloisonnée par les plateformes publicitaires comme Google ou Meta
 
 <p align="center">
   <a href="https://acb-dudaclickscore.streamlit.app/" target="_blank"><img alt="Streamlit app" src="https://img.shields.io/badge/DEMO-online-success?logo=streamlit"></a>
