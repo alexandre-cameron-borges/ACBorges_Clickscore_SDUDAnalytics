@@ -52,7 +52,7 @@ Ces jeux ont été nettoyés, fusionnés et enrichis (imputation d’âge, de ge
 | **Clickbait ±** | BERT + features (âge, genre) <br> multi‑task `CB_F1 + truthMean Acc` | Fusion Kaggle & Webis      | F1 ≈ 0 .90 / Acc ≈ 0 .71 |
 | **CTR %**       | BERT regression <br> (sigmoïde 0‑1)                                  | Top 100 MIND (≥ 100 impr.) | RMSE ≈ 0 .018            |
 
-Les poids entraînés sont stockés sur le compte privé **Hugging Face** de l’auteur et chargés *à la volée* via l’API.
+Les poids entraînés sont stockés sur mon compte privé **Hugging Face** et chargés *à la volée* via l’API.
 
 ## 🏗️ Architecture de l’application
 
