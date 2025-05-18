@@ -64,8 +64,6 @@ app.py (Streamlit)
  └─ notebooks/ (préparation & fine‑tuning)
 ```
 
-![flow](docs/architecture.svg)
-
 1. L’utilisateur charge son CSV.
 2. `predict.py` télécharge (la première fois) puis met en cache les deux modèles à partir de Hugging Face.
 3. Pour chaque texte :
