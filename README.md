@@ -9,7 +9,6 @@ L'idée est également de récupérer une part de la connaissance de l'efficacit
 <p align="center">
   <a href="https://acb-dudaclickscore.streamlit.app/" target="_blank"><img alt="Streamlit app" src="https://img.shields.io/badge/DEMO-online-success?logo=streamlit"></a>
   <img alt="Python" src="https://img.shields.io/badge/Python-3.10+-blue?logo=python">
-  <img alt="License" src="https://img.shields.io/badge/License-MIT-lightgrey">
 </p>
 
 ---
