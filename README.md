@@ -29,7 +29,7 @@ Vidéo explicative: https://drive.google.com/drive/folders/1pvxEq-HsV99_zG1A3AIU
 
 2. Choisissez le **cible démographique** (âge, genre).
 
-3. Importez un CSV comportant deux colonnes :
+3. Importez un CSV comportant deux colonnes, avec jusqu'à 10 textes publicitaires à tester :
 
    | image              | texte                       |
    | ------------------ | --------------------------- |
