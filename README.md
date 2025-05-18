@@ -43,7 +43,7 @@ L'idée est également de récupérer une part de la connaissance de l'efficacit
 | News CTR              | Microsoft **MIND**             | [https://msnews.github.io/](https://msnews.github.io/)                                                 |
 | Clickbait multi‑modal | **Webis Clickbait 2017**       | [https://webis.de/competitions/clickbait-2017.html](https://webis.de/competitions/clickbait-2017.html) |
 
-Ces jeux ont été nettoyés, fusionnés et enrichis (imputation d’âge, de genre et de *truthMean=probabilité de clickbait*) dans le notebook [`data_and_finetuning.ipynb`](data_and_finetuning.ipynb).
+Les jeux Kaggle & WEBIS ont été nettoyés, normalisés et fusionnés puis enrichis (imputation d’âge, de genre et de *truthMean=probabilité de clickbait*) afin d'entraîner le modèle de classification, le Dataset MIND a été transformé (calcul du CTR à partir du nombre de clics et nombres d'affichages d'un Id publicitaire correspondant à des titres publicitaires) dans le notebook [`data_and_finetuning.ipynb`](data_and_finetuning.ipynb).
 
 ## 🧠 Modèles
 
@@ -52,7 +52,7 @@ Ces jeux ont été nettoyés, fusionnés et enrichis (imputation d’âge, de ge
 | **Clickbait ±** | BERT + features (âge, genre) <br> multi‑task `CB_F1 + truthMean Acc` | Fusion Kaggle & Webis      | F1 ≈ 0 .90 / Acc ≈ 0 .71 |
 | **CTR %**       | BERT regression <br> (sigmoïde 0‑1)                                  | Top 100 MIND (≥ 100 impr.) | RMSE ≈ 0 .018            |
 
-Les poids entraînés sont stockés sur mon compte privé **Hugging Face** et chargés *à la volée* via l’API. Le dépôt Hugging Face: https://huggingface.co/alexandre-cameron-borges
+Les poids entraînés (< 5 epoch) sont stockés sur mon compte privé **Hugging Face** et chargés *à la volée* via l’API. Le dépôt Hugging Face: https://huggingface.co/alexandre-cameron-borges
 
 ## 🏗️ Architecture de l’application
 
