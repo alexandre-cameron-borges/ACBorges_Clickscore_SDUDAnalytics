@@ -111,7 +111,6 @@ $ streamlit run app.py
 
 ## 🙋 Auteur
 
-| ![Alexandre Cameron BORGES](https://avatars.githubusercontent.com/u/0?s=100)                   |
 | ---------------------------------------------------------------------------------------------- |
 | **Alexandre Cameron BORGES** ─ [LinkedIn](https://fr.linkedin.com/in/alexandre-cameron-borges) |
 
