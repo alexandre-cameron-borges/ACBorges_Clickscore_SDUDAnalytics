@@ -2,6 +2,7 @@ import streamlit as st
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib
 import numpy as np
 
 # 0️⃣ Token HF
