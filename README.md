@@ -7,6 +7,7 @@ Contexte: Les investissements publicitaires en ligne sont de plus en plus omnipr
 L'idée est également de récupérer une part de la connaissance de l'efficacité publicitaire, connaissance qui est cloisonnée par les plateformes publicitaires comme Google ou Meta
 
 Google Colab de préparation: https://colab.research.google.com/drive/1lrgvBJ_1BHrT732r1RnnV1ZBOvZKzZN5?usp=sharing 
+Vidéo explicative: https://drive.google.com/drive/folders/1pvxEq-HsV99_zG1A3AIUmYXZUuTeT0SN?usp=drive_link 
 
 <p align="center">
   <a href="https://acb-dudaclickscore.streamlit.app/" target="_blank"><img alt="Streamlit app" src="https://img.shields.io/badge/DEMO-online-success?logo=streamlit"></a>
