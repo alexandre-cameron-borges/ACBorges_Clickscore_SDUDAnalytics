@@ -55,8 +55,8 @@ Base: BERT est un modèle de langage lancé fin 2018 : il repose sur un bloc Tra
 
 | Tâche           | Architecture                                                         | Dataset d’entraînement     | Métriques (val set)      |
 | --------------- | -------------------------------------------------------------------- | -------------------------- | ------------------------ |
-| **Clickbait ±** | BERT + features (âge, genre) <br> multi‑task `CB_F1 + truthMean Acc` | Fusion Kaggle & Webis      | F1 ≈ 0 .90 (sur 1 ; cela mesure à la fois les bons “oui” et les bons “non”) / Acc ≈ 0 .71 (71 % des titres bien classés)|
-| **CTR %**       | BERT regression <br> (sigmoïde 0‑1: pour qu’il reste dans 0-100 %)                                 | Top 100 MIND (≥ 100 impr.) | RMSE ≈ 0 .018 (en moyenne le modèle se trompe de 1,8 points sur 100 dans le pourcentage cliqué)           |
+| **Clickbait ±** | BERT + features (âge, genre) <br> multi‑task `CB_F1 + truthMean Acc` | (62767 lignes * 5 colonnes) Fusion Kaggle & Webis      | F1 ≈ 0 .90 (sur 1 ; cela mesure à la fois les bons “oui” et les bons “non”) / Acc ≈ 0 .71 (71 % des titres bien classés)|
+| **CTR %**       | BERT regression <br> (sigmoïde 0‑1: pour qu’il reste dans 0-100 %)                                 | (10189 lignes * 2 colonnes) MIND (≥ 100 impr.) | RMSE ≈ 0 .018 (en moyenne le modèle se trompe de 1,8 points sur 100 dans le pourcentage cliqué)           |
 
 Les poids entraînés (< 5 epoch) sont stockés sur mon compte privé **Hugging Face** et chargés *à la volée* via l’API. Le dépôt Hugging Face: https://huggingface.co/alexandre-cameron-borges
 
