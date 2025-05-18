@@ -43,7 +43,7 @@ L'idée est également de récupérer une part de la connaissance de l'efficacit
 | News CTR              | Microsoft **MIND**             | [https://msnews.github.io/](https://msnews.github.io/)                                                 |
 | Clickbait multi‑modal | **Webis Clickbait 2017**       | [https://webis.de/competitions/clickbait-2017.html](https://webis.de/competitions/clickbait-2017.html) |
 
-Les jeux Kaggle & WEBIS ont été nettoyés, normalisés et fusionnés puis enrichis (imputation d’âge, de genre et de *truthMean=probabilité de clickbait*) afin d'entraîner le modèle de classification, le Dataset MIND a été transformé (calcul du CTR à partir du nombre de clics et nombres d'affichages d'un Id publicitaire correspondant à des titres publicitaires) dans le notebook [`data_and_finetuning.ipynb`](data_and_finetuning.ipynb).
+Les jeux Kaggle & WEBIS ont été nettoyés, normalisés (colonnes: texte, age, genre, clickbait o/n) et fusionnés puis enrichis (imputation d’âge, de genre et de *truthMean=probabilité de clickbait*) afin d'entraîner le modèle de classification clickbait, le Dataset MIND a été transformé seul pour le modèle de régression linéaire CTR (calcul du CTR à partir du nombre de clics et nombres d'affichages d'un Id publicitaire correspondant à des titres publicitaires) dans le notebook [`data_and_finetuning.ipynb`](data_and_finetuning.ipynb).
 
 ## 🧠 Modèles
 
