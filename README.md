@@ -37,9 +37,9 @@ L'idée est également de récupérer une part de la connaissance de l'efficacit
 
 | Domaine               | Source                         | Lien                                                                                                   |
 | --------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------ |
-| Clickbait (EN)        | Kaggle « Clickbait Headlines » | `amananandrai/clickbait-dataset`                                                                       |
-| Ads clicks            | Kaggle « Ad Click Prediction » | `marius2303/ad-click-prediction-dataset`                                                               |
-| Advertising           | Kaggle « Advertising CSV »     | `souvik1618/advertising-dataset`                                                                       |
+| Clickbait (EN)        | Kaggle « Clickbait Headlines » | `[amananandrai/clickbait-dataset](https://www.kaggle.com/datasets/amananandrai/clickbait-dataset)`                                                                       |
+| Ads clicks            | Kaggle « Ad Click Prediction » | `[marius2303/ad-click-prediction-dataset](https://www.kaggle.com/datasets/marius2303/ad-click-prediction-dataset )`                                                               |
+| Advertising           | Kaggle « Advertising CSV »     | `[souvik1618/advertising-dataset](https://www.kaggle.com/datasets/marius2303/ad-click-prediction-dataset)`                                                                       |
 | News CTR              | Microsoft **MIND**             | [https://msnews.github.io/](https://msnews.github.io/)                                                 |
 | Clickbait multi‑modal | **Webis Clickbait 2017**       | [https://webis.de/competitions/clickbait-2017.html](https://webis.de/competitions/clickbait-2017.html) |
 
