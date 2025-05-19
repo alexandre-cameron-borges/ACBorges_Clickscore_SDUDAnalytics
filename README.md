@@ -43,9 +43,9 @@ Vidéo explicative: https://drive.google.com/drive/folders/1pvxEq-HsV99_zG1A3AIU
 | --------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------ |
 | Clickbait (EN)        | Kaggle « Clickbait Headlines » | [amananandrai/clickbait-dataset](https://www.kaggle.com/datasets/amananandrai/clickbait-dataset)                                                                       |
 | Ads clicks            | Kaggle « Ad Click Prediction » | [marius2303/ad-click-prediction-dataset](https://www.kaggle.com/datasets/marius2303/ad-click-prediction-dataset )`                                                               |
-| Advertising           | Kaggle « Advertising CSV »     | [souvik1618/advertising-dataset](https://www.kaggle.com/datasets/marius2303/ad-click-prediction-dataset)`                                                                       |
+| Advertising clicks          | Kaggle « Advertising CSV »     | [souvik1618/advertising-dataset](https://www.kaggle.com/datasets/marius2303/ad-click-prediction-dataset)`                                                                       |
 | News CTR              | Microsoft **MIND**             | [https://msnews.github.io/](https://msnews.github.io/)                                                 |
-| Clickbait multi‑modal | **Webis Clickbait 2017**       | [https://webis.de/competitions/clickbait-2017.html](https://webis.de/competitions/clickbait-2017.html) |
+| Clickbait multi‑modal | **Webis Clickbait 2017**       | [https://webis.de/competitions/clickbait-2017.html](https://zenodo.org/records/5530410) |
 
 Les jeux Kaggle & WEBIS ont été nettoyés, normalisés (colonnes: texte, age, genre, clickbait o/n) et fusionnés puis enrichis (imputation d’âge, de genre et de *truthMean=probabilité de clickbait*) afin d'entraîner le modèle de classification clickbait, le Dataset MIND a été transformé seul pour le modèle de régression linéaire CTR (calcul du CTR à partir du nombre de clics et nombres d'affichages d'un Id publicitaire correspondant à des titres publicitaires) dans le notebook [`data_and_finetuning.ipynb`](data_and_finetuning.ipynb).
 
